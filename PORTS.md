@@ -21,6 +21,7 @@
 - 50106 (hemmelig)
 - 50107 (homebox)
 - 50108 (paperless-ngx)
+- 50109 (home assistant)
 - 50110 (kopia)
 - 50111 (portainer)
 - 50112 (grafana)
@@ -36,8 +37,10 @@
 - 40106 (hemmelig)
 - 40107 (homebox)
 - 40108 (paperless-ngx)
+- 40109 (home assistant)
 - 40110 (kopia)
 - 40111 (portainer)
 - 40112 (grafana)
 - 40113 (prometheus)
 - 40114 (node-exporter)
+
