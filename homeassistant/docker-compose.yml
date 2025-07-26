@@ -1,0 +1,83 @@
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: "ghcr.io/home-assistant/home-assistant:stable"
+    volumes:
+      - vconfig:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /run/dbus:/run/dbus:ro
+    restart: unless-stopped
+    privileged: true
+    environment:
+      TZ: ${TZ}
+    networks:
+      - revproxy
+      - homeassistant
+    ports:
+      - 127.0.0.1:${PORT}:8123
+
+  zigbee2mqtt:
+        container_name: zigbee2mqtt
+        image: ghcr.io/koenkk/zigbee2mqtt
+        restart: unless-stopped
+        volumes:
+            - vmqttdata:/app/data
+            - /run/udev:/run/udev:ro
+        ports:
+            # Frontend port
+            - ${Z2MQTT_PORT}:8080
+        environment:
+            - TZ=${TZ}
+        networks:
+          - homeassistant
+        # privileged: true
+        devices:
+            # Make sure this matched your adapter location
+            # For adapter SZLB-6 (check your path and device name if you use a hub)
+            - /dev/serial/by-id/usb-SMLIGHT_SMLIGHT_SLZB-06_1414e89bfbacef11b7c28e4ba8793231-if00-port0:/dev/ttyUSB0
+
+  mqtt:
+    image: eclipse-mosquitto
+    container_name: mqtt
+    volumes:
+      - vmqttconfig:/mosquitto/config
+      - vmqttdata:/mosquitto/data
+      - vmqttlog:/mosquitto/log
+    ports:
+      - ${MQTT_PORT_UNSEQ}:1883
+      - 127.0.0.1:${MQTT_PORT_UNSEQ_WS}:9001
+    networks:
+      - homeassistant
+
+networks:
+  revproxy:
+    external: true
+  homeassistant:
+    external: true
+
+volumes:
+  vconfig:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${CONFIG_PATH}
+  vmqttconfig:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${MQTT_CONFIG_PATH}
+  vmqttdata:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${MQTT_DATA_PATH}
+  vmqttlog:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${MQTT_LOG_PATH}
+
