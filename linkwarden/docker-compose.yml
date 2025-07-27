@@ -1,16 +1,16 @@
 services:
-    postgres:
+    linkwarden-postgres:
         image: postgres:16-alpine
-        container_name: postgres
+        container_name: linkwarden-postgres
         environment:
-            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-            - POSTGRES_USER=${POSTGRES_USER}
-            - POSTGRES_DB=${POSTGRES_DB}
+            - POSTGRES_PASSWORD=${LINKWARDEN_DB_PASSWORD}
+            - POSTGRES_USER=${LINKWARDEN_DB_USERNAME}
+            - POSTGRES_DB=${LINKWARDEN_DB_NAME}
         # ports:
             # - 127.0.0.1:5432:5432
         restart: unless-stopped
         networks:
-            - postgres
+            - linkwarden
         volumes:
             - pgdata:/var/lib/postgresql/data
     
@@ -18,25 +18,25 @@ services:
         image: ghcr.io/linkwarden/linkwarden:latest
         container_name: linkwarden
         environment:
-            - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-            - NEXTAUTH_URL=${NEXTAUTH_URL}
-            - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-            - NEXT_PUBLIC_DISABLE_REGISTRATION=${IS_PUBLIC_AUTH_DISABLED}
+            - DATABASE_URL=postgresql://${LINKWARDEN_DB_USERNAME}:${LINKWARDEN_DB_PASSWORD}@linkwarden-postgres:5432/${LINKWARDEN_DB_NAME}
+            - NEXTAUTH_URL=${LINKWARDEN_NEXTAUTH_URL}
+            - NEXTAUTH_SECRET=${LINKWARDEN_NEXTAUTH_SECRET}
+            - NEXT_PUBLIC_DISABLE_REGISTRATION=${LINKWARDEN_IS_PUBLIC_AUTH_DISABLED}
         ports:
-            - "${PORT}:3000"
+            - "${LINKWARDEN_DOCKER_PORT}:3000"
         volumes:
             - data:/data/data
         restart: unless-stopped
         networks:
             - revproxy
-            - postgres
+            - linkwarden
         depends_on:
-            - postgres
+            - linkwarden-postgres
 
 networks:
     revproxy:
         external: true
-    postgres:
+    linkwarden:
         external: true
 
 volumes:
@@ -45,10 +45,10 @@ volumes:
         driver_opts:
             type: none
             o: bind
-            device: ${VPGDATA}
+            device: ${LINKWARDEN_DATA_DB_PATH}
     data:
         driver: local
         driver_opts:
             type: none
             o: bind
-            device: ${VDATA}
+            device: ${LINKWARDEN_DATA_PATH}
