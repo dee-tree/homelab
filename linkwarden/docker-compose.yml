@@ -19,7 +19,7 @@ services:
         container_name: linkwarden
         environment:
             - DATABASE_URL=postgresql://${LINKWARDEN_DB_USERNAME}:${LINKWARDEN_DB_PASSWORD}@linkwarden-postgres:5432/${LINKWARDEN_DB_NAME}
-            - NEXTAUTH_URL=${LINKWARDEN_NEXTAUTH_URL}
+            - NEXTAUTH_URL=https://${LINKWARDEN_SUBDOMAIN}.${DOMAIN_NAME}/api/v1/auth
             - NEXTAUTH_SECRET=${LINKWARDEN_NEXTAUTH_SECRET}
             - NEXT_PUBLIC_DISABLE_REGISTRATION=${LINKWARDEN_IS_PUBLIC_AUTH_DISABLED}
         ports:
@@ -52,3 +52,4 @@ volumes:
             type: none
             o: bind
             device: ${LINKWARDEN_DATA_PATH}
+
