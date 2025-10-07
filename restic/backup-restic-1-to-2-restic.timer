@@ -1,0 +1,12 @@
+# # ln -s <this file> /etc/systemd/system/backup-restic-1-to-2-restic.timer
+
+[Unit]
+Description=Daily backups replication to local storage
+
+[Timer]
+OnCalendar=*-*-* 05:00:00
+RandomizedDelaySec=1800
+Persistent=true
+
+[Install]
+WantedBy=timers.target

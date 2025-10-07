@@ -27,6 +27,8 @@
 - 50112 (grafana)
 - 50113 (prometheus)
 - 50114 (node-exporter)
+- 50115 (zigbee2mqtt)
+- 50116 (restic)
 
 ### Hidden docker container ports on networks
 
@@ -43,4 +45,5 @@
 - 40112 (grafana)
 - 40113 (prometheus)
 - 40114 (node-exporter)
-
+- 40115 (zigbee2mqtt)
+- 40116 (restic)

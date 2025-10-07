@@ -1,0 +1,28 @@
+services:
+  restic:
+    image: restic/rest-server:latest
+    container_name: restic-server
+    hostname: restic-server
+    restart: unless-stopped
+    environment:
+      # adding --append-only option leads to unability to preserve retention policy and remove old snapshots
+      - OPTIONS=--path /data --private-repos --prometheus
+      - TZ=$TZ
+    ports:
+      - 127.0.0.1:${RESTIC_DOCKER_PORT}:8000
+    networks:
+      - revproxy
+    volumes:
+      - backups:/data
+
+networks:
+  revproxy:
+    external: true
+
+volumes:
+  backups:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${VDATA}

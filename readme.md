@@ -42,6 +42,10 @@ This repo is a cookbook of various self-hosted projects as a single home lab
 
 [kopia](./kopia/)
 
+### Restic
+
+[restic](./restic/)
+
 ...
 
 ---

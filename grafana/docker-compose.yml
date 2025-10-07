@@ -12,7 +12,7 @@ services:
       - revproxy # don't forget to create the network manually via docker
     environment:
       - TZ=$TZ
-      - GF_SERVER_ROOT_URL=https://monitor.mydomain.com
+      - GF_SERVER_ROOT_URL=https://${GRAFANA_DOMAIN}
 
   prometheus:
     image: prom/prometheus:latest

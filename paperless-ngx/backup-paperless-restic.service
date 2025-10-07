@@ -1,0 +1,29 @@
+# ln -s <this file> /etc/systemd/system/backup-paperless-restic.service
+# sudo systemctl daemon-reload
+# sudo systemctl enable --now backup-paperless-restic.timer
+# sudo systemctl start backup-paperless-restic.service
+# journalctl -xeu backup-paperless-restic.service
+
+[Unit]
+Description=Generate a restic backup snapshot of Paperless
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root
+ExecStartPre=/usr/bin/docker stop paperless paperless-gotenberg paperless-postgres paperless-redis paperless-tika
+ExecStart=/usr/bin/restic backup ${PAPERLESS_DATA_PATH} ${PAPERLESS_MEDIA_PATH} ${PAPERLESS_PGDATA_PATH} --tag paperless
+ExecStart=/usr/bin/restic forget --prune --keep-hourly ${BACKUP_RETENTION_HOURLY} --keep-daily ${BACKUP_RETENTION_DAILY} --keep-weekly ${BACKUP_RETENTION_WEEKLY} --keep-monthly ${BACKUP_RETENTION_MONTHLY} --keep-yearly ${BACKUP_RETENTION_YEARLY} --tag paperless
+ExecStart=/usr/bin/restic check --read-data
+ExecStartPost=/usr/bin/docker start paperless-tika paperless-redis paperless-postgres paperless-gotenberg paperless
+
+EnvironmentFile=/etc/.restic.env
+Environment=XDG_CACHE_HOME=/var/cache
+Nice=19
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+TimeoutSec=3600
+Restart=no
+
+[Install]
+WantedBy=multi-user.target
