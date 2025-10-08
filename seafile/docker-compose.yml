@@ -132,3 +132,9 @@ volumes:
       type: none
       o: bind
       device: ${VELASTIC_SEARCH_DATA_PATH}
+  # vlogs:
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     o: bind
+  #     device: ${LOGS_PATH}
