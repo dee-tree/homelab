@@ -35,6 +35,20 @@ services:
     networks:
       - seafile
 
+# instead of memcached
+  # seafile-redis:
+  #   image: redis
+  #   container_name: seafile-redis
+  #   restart: unless-stopped
+  #   command:
+  #     - /bin/sh
+  #     - -c
+  #     - redis-server --requirepass "$$REDIS_PASSWORD"
+  #   environment:
+  #     - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+  #   networks:
+  #     - seafile
+
   elasticsearch:
     image: elasticsearch:8.16.4
     container_name: seafile-elasticsearch
@@ -54,8 +68,51 @@ services:
     networks:
       - seafile
 
+# instead of elasticsearch
+  # seasearch:
+  #   image: ${SEASEARCH_IMAGE:-seafileltd/seasearch:1.0-latest}
+  #   container_name: seafile-seasearch
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ${SS_DATA_PATH:-/opt/seasearch-data}:/opt/seasearch/data
+  #   environment:
+  #     - SS_FIRST_ADMIN_USER=${INIT_SS_ADMIN_USER:-}
+  #     - SS_FIRST_ADMIN_PASSWORD=${INIT_SS_ADMIN_PASSWORD:-}
+  #     - SS_MAX_OBJ_CACHE_SIZE=${SS_MAX_OBJ_CACHE_SIZE:-10GB}
+  #     - SS_STORAGE_TYPE=${SS_STORAGE_TYPE:-disk}
+  #     - S3_SS_BUCKET=${S3_SS_BUCKET:-}
+  #     - S3_KEY_ID=${S3_KEY_ID:-}
+  #     - S3_USE_V4_SIGNATURE=${S3_USE_V4_SIGNATURE:-true}
+  #     - S3_SECRET_KEY=${S3_SECRET_KEY:-}
+  #     - S3_HOST=${S3_HOST:-}
+  #     - S3_USE_HTTPS=${S3_USE_HTTPS:-true}
+  #     - S3_PATH_STYLE_REQUEST=${S3_PATH_STYLE_REQUEST:-true}
+  #     - S3_AWS_REGION=${S3_AWS_REGION:-us-east-1}
+  #     - S3_SSE_C_KEY=${S3_SSE_C_KEY:-}
+  #     - SS_LOG_TO_STDOUT=${SS_LOG_TO_STDOUT:-false}
+  #     - SS_LOG_DIR=${SS_LOG_DIR:-/opt/seasearch/data/log}
+  #     - SS_LOG_LEVEL=${SS_LOG_LEVEL:-info}
+  #     # SeaSeasrch Proxy
+  #     - SEAFILE_LOG_TO_STDOUT=${SEAFILE_LOG_TO_STDOUT:-false}
+  #     - SEATABLE_LOG_TO_STDOUT=${SEATABLE_LOG_TO_STDOUT:-false}
+  #     # for cluster
+  #     - SS_SERVER_MODE=${SS_SERVER_MODE:-}
+  #     - SS_CLUSTER_ID=${SS_CLUSTER_ID:-}
+  #     - SS_CLUSTER_PROXY_HOST=${SS_CLUSTER_PROXY_HOST:-0.0.0.0}
+  #     - SS_CLUSTER_PROXY_PORT=${SS_CLUSTER_PROXY_PORT:-4082}
+  #     - SS_CLUSTER_MANAGER_ADDR=${SS_CLUSTER_MANAGER_ADDR:-127.0.0.1:4081}
+  #     - SS_ETCD_USERNAME=${SS_ETCD_USERNAME:-}
+  #     - SS_ETCD_PASSWORD=${SS_ETCD_PASSWORD:-}
+  #     - SS_ETCD_ENDPOINTS=${SS_ETCD_ENDPOINTS:-127.0.0.1:2379}
+  #     - SS_ETCD_PREFIX=${SS_ETCD_PREFIX:-/zinc}
+  #     - SS_CLUSTER_PROXY_LOG_DIR=${SS_CLUSTER_PROXY_LOG_DIR:--/opt/seasearch/data/log}
+  #     - SS_CLUSTER_MANAGER_HOST=${SS_CLUSTER_MANAGER_HOST:-0.0.0.0}
+  #     - SS_CLUSTER_MANAGER_PORT=${SS_CLUSTER_MANAGER_PORT:-4081}
+  #   networks:
+  #     - seafile-net
+
   seafile:
-    image: seafileltd/seafile-pro-mc:12.0-latest # seafile pro edition
+    image: seafileltd/seafile-pro-mc:13.0-latest # seafile pro edition
     container_name: seafile
     restart: always
     ports:
@@ -63,11 +120,11 @@ services:
     volumes:
       - vdata:/shared
     environment:
-      - DB_HOST=seafile-mariadb
-      - DB_PORT=${SEAFILE_MYSQL_DB_PORT:-3306}
-      - DB_USER=${SEAFILE_DB_USER:-seafile}
-      - DB_ROOT_PASSWD=${SEAFILE_DB_INIT_ROOT_PASSWORD:-}
-      - DB_PASSWORD=${SEAFILE_DB_PASSWORD:?Variable is not set or empty}
+      - SEAFILE_MYSQL_DB_HOST=seafile-mariadb
+      - SEAFILE_MYSQL_DB_PORT=${SEAFILE_MYSQL_DB_PORT:-3306}
+      - SEAFILE_MYSQL_DB_USER=${SEAFILE_DB_USER:-seafile}
+      - INIT_SEAFILE_MYSQL_ROOT_PASSWORD=${SEAFILE_DB_INIT_ROOT_PASSWORD:-}
+      - SEAFILE_MYSQL_DB_PASSWORD=${SEAFILE_DB_PASSWORD:?Variable is not set or empty}
       - SEAFILE_MYSQL_DB_CCNET_DB_NAME=${SEAFILE_MYSQL_DB_CCNET_DB_NAME:-ccnet_db}
       - SEAFILE_MYSQL_DB_SEAFILE_DB_NAME=${SEAFILE_MYSQL_DB_SEAFILE_DB_NAME:-seafile_db}
       - SEAFILE_MYSQL_DB_SEAHUB_DB_NAME=${SEAFILE_MYSQL_DB_SEAHUB_DB_NAME:-seahub_db}
@@ -84,18 +141,37 @@ services:
       - ENABLE_SEADOC=${ENABLE_SEADOC:-true}
       - SEADOC_SERVER_URL=${SEAFILE_SERVER_PROTOCOL:-http}://${SEAFILE_DOMAIN:?Variable is not set or empty}/sdoc-server
 
+      - CACHE_PROVIDER=memcached
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - MEMCACHED_HOST=${MEMCACHED_HOST:-memcached}
+      - MEMCACHED_PORT=${MEMCACHED_PORT:-11211}
+      - SEAF_SERVER_STORAGE_TYPE=${SEAF_SERVER_STORAGE_TYPE:-}
+
       ### Optional S3 config
       - INIT_S3_STORAGE_BACKEND_CONFIG=${INIT_S3_STORAGE_BACKEND_CONFIG:-false}
-      - INIT_S3_COMMIT_BUCKET=${INIT_S3_COMMIT_BUCKET:-}
-      - INIT_S3_FS_BUCKET=${INIT_S3_FS_BUCKET:-}
-      - INIT_S3_BLOCK_BUCKET=${INIT_S3_BLOCK_BUCKET:-}
-      - INIT_S3_KEY_ID=${INIT_S3_KEY_ID:-}
-      - INIT_S3_SECRET_KEY=${INIT_S3_SECRET_KEY:-}
-      - INIT_S3_USE_V4_SIGNATURE=${INIT_S3_USE_V4_SIGNATURE:-true}
-      - INIT_S3_AWS_REGION=${INIT_S3_AWS_REGION:-us-east-1}
-      - INIT_S3_HOST=${INIT_S3_HOST:-us-east-1}
-      - INIT_S3_USE_HTTPS=${INIT_S3_USE_HTTPS:-true}
+      - S3_COMMIT_BUCKET=${INIT_S3_COMMIT_BUCKET:-}
+      - S3_FS_BUCKET=${INIT_S3_FS_BUCKET:-}
+      - S3_BLOCK_BUCKET=${INIT_S3_BLOCK_BUCKET:-}
+      - S3_KEY_ID=${INIT_S3_KEY_ID:-}
+      - S3_SECRET_KEY=${INIT_S3_SECRET_KEY:-}
+      - S3_USE_V4_SIGNATURE=${INIT_S3_USE_V4_SIGNATURE:-true}
+      - S3_AWS_REGION=${INIT_S3_AWS_REGION:-us-east-1}
+      - S3_HOST=${INIT_S3_HOST:-us-east-1}
+      - S3_USE_HTTPS=${INIT_S3_USE_HTTPS:-true}
       - FORCE_HTTPS_IN_CONF=${FORCE_HTTPS_IN_CONF}
+
+      - S3_PATH_STYLE_REQUEST=${S3_PATH_STYLE_REQUEST:-false}
+      - S3_SSE_C_KEY=${S3_SSE_C_KEY:-}
+
+      - ENABLE_NOTIFICATION_SERVER=${ENABLE_NOTIFICATION_SERVER:-false}
+      - INNER_NOTIFICATION_SERVER_URL=${INNER_NOTIFICATION_SERVER_URL:-http://notification-server:8083}
+      - NOTIFICATION_SERVER_URL=${NOTIFICATION_SERVER_URL:-${SEAFILE_SERVER_PROTOCOL:-http}://${SEAFILE_DOMAIN:?Variable is not set or empty}/notification}
+      - ENABLE_SEAFILE_AI=${ENABLE_SEAFILE_AI:-false}
+      - SEAFILE_AI_SERVER_URL=${SEAFILE_AI_SERVER_URL:-http://seafile-ai:8888}
+      - SEAFILE_AI_SECRET_KEY=${SEAFILE_JWT_PRIVATE_KEY:?Variable is not set or empty}
+      - MD_FILE_COUNT_LIMIT=${MD_FILE_COUNT_LIMIT:-100000}
     depends_on:
       seafile-mariadb:
         condition: service_healthy
