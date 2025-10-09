@@ -1,3 +1,4 @@
+
 services:
     couchserver:
         image: couchdb:3.1.2
@@ -7,16 +8,24 @@ services:
             - "127.0.0.1:40103:5984"
         environment:
             - COUCHDB_USER=${COUCHDB_USER}
-            - COUCHDB_PASSWORD=${COUCHDB_PASSWORD}
+            - COUCHDB_PASSWORD=${COUCHDB_PW}
         volumes:
             # The files' owner will be id:5984 when you launch the image.
             # Because CouchDB writes on-the-fly configurations into local.ini.
             # So when you want to perform git pull or change something, you have to change owners back.
-            - ./data:/opt/couchdb/data
-            - ./config/local.ini:/opt/couchdb/etc/local.ini
+            - data:/opt/couchdb/data
+            - ./data/local.ini:/opt/couchdb/etc/local.ini:ro
         networks:
             - revproxy
-        
+
 networks:
   revproxy:
     external: true
+
+volumes:
+  data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${VDATAPATH}

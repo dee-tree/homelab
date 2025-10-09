@@ -1,0 +1,29 @@
+# ln -s <this file> /etc/systemd/system/backup-obsidian-restic.service
+# sudo systemctl daemon-reload
+# sudo systemctl enable --now backup-obsidian-restic.timer
+# sudo systemctl start backup-obsidian-restic.service
+# journalctl -xeu backup-obsidian-restic.service
+
+[Unit]
+Description=Generate a restic backup snapshot of obsidian
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root
+ExecStartPre=/usr/bin/docker stop obsidian-couchdb
+ExecStart=/usr/bin/restic backup ${OBSIDIAN_LIVESYNC_DATA_PATH} --tag obsidian
+ExecStart=/usr/bin/restic forget --prune --keep-hourly ${BACKUP_RETENTION_HOURLY} --keep-daily ${BACKUP_RETENTION_DAILY} --keep-weekly ${BACKUP_RETENTION_WEEKLY} --keep-monthly ${BACKUP_RETENTION_MONTHLY} --keep-yearly ${BACKUP_RETENTION_YEARLY} --tag obsidian
+ExecStart=/usr/bin/restic check --read-data
+ExecStartPost=/usr/bin/docker start obsidian-couchdb
+
+EnvironmentFile=/etc/.restic.env
+Environment=XDG_CACHE_HOME=/var/cache
+Nice=19
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+TimeoutSec=3600
+Restart=no
+
+[Install]
+WantedBy=multi-user.target
