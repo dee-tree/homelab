@@ -11,8 +11,9 @@ services:
       - revproxy
       - baikal_network
 
-  db:
+  baikal-db:
     image: mariadb:11.3 # it could be mysql compatible db
+    container_name: baikal_db
     restart: always
     command: --default-authentication-plugin=mysql_native_password
     networks:

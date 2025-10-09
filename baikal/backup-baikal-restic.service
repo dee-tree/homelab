@@ -1,0 +1,29 @@
+# ln -s <this file> /etc/systemd/system/backup-baikal-restic.service
+# sudo systemctl daemon-reload
+# sudo systemctl enable --now backup-baikal-restic.timer
+# sudo systemctl start backup-baikal-restic.service
+# journalctl -xeu backup-baikal-restic.service
+
+[Unit]
+Description=Generate a restic backup snapshot of baikal
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root
+ExecStartPre=/usr/bin/docker stop baikal-db baikal
+ExecStart=/usr/bin/restic backup ${BAIKAL_DATA_PATH} --tag baikal
+ExecStart=/usr/bin/restic forget --prune --keep-hourly ${BACKUP_RETENTION_HOURLY} --keep-daily ${BACKUP_RETENTION_DAILY} --keep-weekly ${BACKUP_RETENTION_WEEKLY} --keep-monthly ${BACKUP_RETENTION_MONTHLY} --keep-yearly ${BACKUP_RETENTION_YEARLY} --tag baikal
+ExecStart=/usr/bin/restic check --read-data
+ExecStartPost=/usr/bin/docker start baikal baikal-db
+
+EnvironmentFile=/etc/.restic.env
+Environment=XDG_CACHE_HOME=/var/cache
+Nice=19
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+TimeoutSec=3600
+Restart=no
+
+[Install]
+WantedBy=multi-user.target
