@@ -8,6 +8,14 @@ Restic is a backup system.
    1. `htpasswd -B -c ${BACKUP_WITH_RESTIC_PATH_1}/.htpasswd <clientname>`. Generated `.htpasswd` file should be located inside persistent `/data` directory with the repo files on its top-level. For adding extra users use the same command omitting `-c` option.
 2. Reverse proxy configuration is in [nginx file](/nginx/config/conf.d/restic.mydomain.com.conf)
 
+
+Create `/etc/restic/*.restic.env` from `etc/templates` and set access rules:
+
+```sh
+sudo chown root:root /etc/restic/*.restic.env
+sudo chmod 700 /etc/restic/*.restic.env
+```
+
 ## Run
 
 Being in *restic* directory, run:
