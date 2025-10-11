@@ -1,0 +1,33 @@
+# ln -s <this file> /etc/systemd/system/backup-restic-1-to-backblaze-restic.service
+# sudo systemctl daemon-reload
+# sudo systemctl enable --now backup-restic-1-to-backblaze-restic.timer
+# sudo systemctl start backup-restic-1-to-backblaze-restic.service
+# journalctl -xeu backup-restic-1-to-backblaze-restic.service
+
+[Unit]
+Description=Copy snapshots from restic server repo to backblaze repo
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root
+
+ExecStart=/usr/bin/restic --repository-file $RESTIC_LOCAL_1_RPI_REPO_PATH --password-file $RESTIC_LOCAL_1_RPI_PASSWORD_PATH check --read-data
+ExecStart=/usr/bin/restic --repository-file $RESTIC_LOCAL_1_LITH_REPO_PATH --password-file $RESTIC_LOCAL_1_LITH_PASSWORD_PATH check --read-data
+
+ExecStart=/usr/bin/restic --from-repository-file $RESTIC_LOCAL_1_RPI_REPO_PATH --from-password-file $RESTIC_LOCAL_1_RPI_PASSWORD_PATH --repository-file $RESTIC_BACKBLAZE_REPO_PATH --password-file $RESTIC_BACKBLAZE_PASSWORD_PATH copy
+ExecStart=/usr/bin/restic --from-repository-file $RESTIC_LOCAL_1_LITH_REPO_PATH --from-password-file $RESTIC_LOCAL_1_LITH_PASSWORD_PATH --repository-file $RESTIC_BACKBLAZE_REPO_PATH --password-file $RESTIC_BACKBLAZE_PASSWORD_PATH copy
+
+ExecStart=/usr/bin/restic forget --repository-file $RESTIC_LOCAL_1_RPI_REPO_PATH --password-file $RESTIC_LOCAL_1_RPI_PASSWORD_PATH --prune --keep-hourly ${BACKUP_RETENTION_HOURLY} --keep-daily ${BACKUP_RETENTION_DAILY} --keep-weekly ${BACKUP_RETENTION_WEEKLY} --keep-monthly ${BACKUP_RETENTION_MONTHLY} --keep-yearly ${BACKUP_RETENTION_YEARLY}
+ExecStart=/usr/bin/restic forget --repository-file $RESTIC_LOCAL_1_LITH_REPO_PATH --password-file $RESTIC_LOCAL_1_LITH_PASSWORD_PATH --prune --keep-hourly ${BACKUP_RETENTION_HOURLY} --keep-daily ${BACKUP_RETENTION_DAILY} --keep-weekly ${BACKUP_RETENTION_WEEKLY} --keep-monthly ${BACKUP_RETENTION_MONTHLY} --keep-yearly ${BACKUP_RETENTION_YEARLY}
+
+EnvironmentFile=/etc/restic/.backblaze.restic.env
+Environment=XDG_CACHE_HOME=/var/cache
+Nice=19
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+TimeoutSec=3600
+Restart=no
+
+[Install]
+WantedBy=multi-user.target

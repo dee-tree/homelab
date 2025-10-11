@@ -17,7 +17,7 @@ ExecStart=/usr/bin/restic forget --prune --keep-hourly ${BACKUP_RETENTION_HOURLY
 ExecStart=/usr/bin/restic check --read-data
 ExecStartPost=/usr/bin/docker start paperless-tika paperless-redis paperless-postgres paperless-gotenberg paperless
 
-EnvironmentFile=/etc/.restic.env
+EnvironmentFile=/etc/restic/.restic.env
 Environment=XDG_CACHE_HOME=/var/cache
 Nice=19
 IOSchedulingClass=best-effort

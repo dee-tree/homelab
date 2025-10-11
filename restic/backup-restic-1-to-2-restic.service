@@ -11,12 +11,17 @@ After=network.target
 [Service]
 Type=oneshot
 WorkingDirectory=/root
-ExecStartPre=/usr/bin/restic check --read-data
-ExecStart=/usr/bin/restic forget --prune --keep-hourly ${BACKUP_RETENTION_HOURLY} --keep-daily ${BACKUP_RETENTION_DAILY} --keep-weekly ${BACKUP_RETENTION_WEEKLY} --keep-monthly ${BACKUP_RETENTION_MONTHLY} --keep-yearly ${BACKUP_RETENTION_YEARLY}
-ExecStart=/usr/bin/restic check --read-data
-ExecStart=/usr/bin/restic -r $BACKUP_WITH_RESTIC_PATH_2 copy
 
-EnvironmentFile=/etc/.restic.env
+ExecStart=/usr/bin/restic --repository-file $RESTIC_LOCAL_1_RPI_REPO_PATH --password-file $RESTIC_LOCAL_1_RPI_PASSWORD_PATH check --read-data
+ExecStart=/usr/bin/restic --repository-file $RESTIC_LOCAL_1_LITH_REPO_PATH --password-file $RESTIC_LOCAL_1_LITH_PASSWORD_PATH check --read-data
+
+ExecStart=/usr/bin/restic --from-repository-file $RESTIC_LOCAL_1_RPI_REPO_PATH --from-password-file $RESTIC_LOCAL_1_RPI_PASSWORD_PATH --repository-file $RESTIC_LOCAL_2_REPO_PATH --password-file $RESTIC_LOCAL_2_PASSWORD_PATH copy
+ExecStart=/usr/bin/restic --from-repository-file $RESTIC_LOCAL_1_LITH_REPO_PATH --from-password-file $RESTIC_LOCAL_1_LITH_PASSWORD_PATH --repository-file $RESTIC_LOCAL_2_REPO_PATH --password-file $RESTIC_LOCAL_2_PASSWORD_PATH copy
+
+ExecStart=/usr/bin/restic forget --repository-file $RESTIC_LOCAL_1_RPI_REPO_PATH --password-file $RESTIC_LOCAL_1_RPI_PASSWORD_PATH --prune --keep-hourly ${BACKUP_RETENTION_HOURLY} --keep-daily ${BACKUP_RETENTION_DAILY} --keep-weekly ${BACKUP_RETENTION_WEEKLY} --keep-monthly ${BACKUP_RETENTION_MONTHLY} --keep-yearly ${BACKUP_RETENTION_YEARLY}
+ExecStart=/usr/bin/restic forget --repository-file $RESTIC_LOCAL_1_LITH_REPO_PATH --password-file $RESTIC_LOCAL_1_LITH_PASSWORD_PATH --prune --keep-hourly ${BACKUP_RETENTION_HOURLY} --keep-daily ${BACKUP_RETENTION_DAILY} --keep-weekly ${BACKUP_RETENTION_WEEKLY} --keep-monthly ${BACKUP_RETENTION_MONTHLY} --keep-yearly ${BACKUP_RETENTION_YEARLY}
+
+EnvironmentFile=/etc/restic/.local2.restic.env
 Environment=XDG_CACHE_HOME=/var/cache
 Nice=19
 IOSchedulingClass=best-effort
