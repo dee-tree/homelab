@@ -1,0 +1,24 @@
+# ln -s <this file> /etc/systemd/system/backup-restic-failure@.service
+# sudo systemctl daemon-reload
+# journalctl -xeu backup-restic-failure.service
+
+[Unit]
+Description=Report restic backup failure
+Requires=network.target
+
+[Service]
+Type=oneshot
+Environment=SERVICE=%i
+ExecStart=/etc/restic/.fatal.email.notify.restic.sh %i
+
+# Security hardening (see man 7 systemd.exec)
+PrivateTmp=true
+ProtectHome=yes
+ProtectSystem=full
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+ProtectControlGroups=true
+PrivateDevices=true
+MemoryDenyWriteExecute=true
+ReadWritePaths=/etc/restic

@@ -7,10 +7,10 @@
 [Unit]
 Description=Generate a restic backup snapshot of Linkwarden
 After=network.target
+OnFailure=backup-restic-failure@%i.service
 
 [Service]
 Type=oneshot
-WorkingDirectory=/root
 ExecStartPre=/usr/bin/docker stop linkwarden linkwarden-postgres
 ExecStart=/usr/bin/restic backup ${LINKWARDEN_DATA_PATH} ${LINKWARDEN_DATA_DB_PATH} --tag linkwarden
 ExecStart=/usr/bin/restic forget --prune --keep-hourly ${BACKUP_RETENTION_HOURLY} --keep-daily ${BACKUP_RETENTION_DAILY} --keep-weekly ${BACKUP_RETENTION_WEEKLY} --keep-monthly ${BACKUP_RETENTION_MONTHLY} --keep-yearly ${BACKUP_RETENTION_YEARLY} --tag linkwarden
@@ -24,6 +24,18 @@ IOSchedulingClass=best-effort
 IOSchedulingPriority=7
 TimeoutSec=3600
 Restart=no
+
+# Security hardening (see man 7 systemd.exec)
+PrivateTmp=true
+ProtectHome=yes
+ProtectSystem=full
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+ProtectControlGroups=true
+PrivateDevices=true
+MemoryDenyWriteExecute=true
+ReadWritePaths=/etc/restic
 
 [Install]
 WantedBy=multi-user.target

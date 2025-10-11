@@ -7,6 +7,7 @@
 [Unit]
 Description=Copy snapshots from restic server repo to "2" local repo
 After=network.target
+OnFailure=backup-restic-failure@%i.service
 
 [Service]
 Type=oneshot
@@ -28,6 +29,18 @@ IOSchedulingClass=best-effort
 IOSchedulingPriority=7
 TimeoutSec=3600
 Restart=no
+
+# Security hardening (see man 7 systemd.exec)
+PrivateTmp=true
+ProtectHome=yes
+ProtectSystem=full
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+ProtectControlGroups=true
+PrivateDevices=true
+MemoryDenyWriteExecute=true
+ReadWritePaths=/etc/restic
 
 [Install]
 WantedBy=multi-user.target
