@@ -1,0 +1,113 @@
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - revproxy # don't forget to create external network
+    ports:
+      - 80:80
+      - 443:443
+      - 88:88 # exposed with port forwarding on network
+      - 444:444 # exposed with port forwarding on network
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL}
+
+    volumes:
+      - /etc/localtime:/etc/localtime:ro # Sync time
+      - /etc/timezone:/etc/timezone:ro # Sync time zone
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Docker socket
+    # - ./config/traefik.yml:/etc/traefik/traefik.yml:ro # Traefik configuration
+      - ./config/acme.json:/etc/traefik/certs/acme.json # SSL certificates
+      - ./config/acme-staging.json:/etc/traefik/certs/acme-staging.json # SSL certificates
+      - /var/log/traefik:/var/log/traefik # Logs
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    command:
+      # Providers
+      - --providers.docker=true
+      - --providers.docker.endpoint=unix:///var/run/docker.sock
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=revproxy
+
+      # Entry points
+      # # "exposed" services are accessible from Internet
+      - --entrypoints.web-exposed.address=:88
+      - --entrypoints.web-exposed.http.redirections.entrypoint.to=websec-exposed
+      - --entrypoints.web-exposed.http.redirections.entrypoint.scheme=https
+      - --entrypoints.web-exposed.forwardedHeaders.trustedIPs=127.0.0.1/32, 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8, 172.21.0.0/16
+
+      - --entrypoints.websec-exposed.address=:444
+      - --entrypoints.websec-exposed.http.tls=true
+      - --entrypoints.websec-exposed.http.tls.certresolver=production
+      - --entrypoints.websec-exposed.forwardedHeaders.trustedIPs=127.0.0.1/32, 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8
+
+      # # "non-exposed" services are accessible within LAN
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websec
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.web.forwardedHeaders.trustedIPs=127.0.0.1/32, 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8
+
+      - --entrypoints.websec.address=:443
+      - --entrypoints.websec.http.tls=true
+      - --entrypoints.websec.http.tls.certresolver=production
+      - --entrypoints.websec.forwardedHeaders.trustedIPs=127.0.0.1/32, 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8
+
+      # Certificates
+      - --certificatesresolvers.staging.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.staging.acme.storage=/etc/traefik/certs/acme-staging.json
+      - --certificatesresolvers.staging.acme.tlschallenge=true
+      - --certificatesresolvers.staging.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
+
+      - --certificatesresolvers.production.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.production.acme.storage=/etc/traefik/certs/acme.json
+      - --certificatesresolvers.production.acme.tlschallenge=true
+      - --certificatesresolvers.production.acme.caserver=https://acme-v02.api.letsencrypt.org/directory
+
+      # Observability
+      - --log.filePath=/var/log/traefik/traefik.log
+      - --log.format=json
+      - --log.level=INFO
+
+      - --accesslog=true
+      - --accesslog.filePath=/var/log/traefik/access.log
+      - --accesslog.format=json
+      # - --accesslog.filters.statuscodes=200,300-302,400-404,500-504
+
+      - --metrics.prometheus=${EXPORT_METRICS:-false}
+      - --metrics.prometheus.addEntryPointsLabels=true
+      - --metrics.prometheus.addServicesLabels=true
+      - --entryPoints.metrics.address=:8001
+      - --metrics.prometheus.entryPoint=metrics
+      - --api.dashboard=true
+      - --api.insecure=false
+
+      - --ping # for healthcheck
+
+    labels:
+      - traefik.enable=true
+      - "traefik.http.routers.dashboard.rule=Host(`${TRAEFIK_DASHBOARD_SUBDOMAIN}.${DOMAIN_NAME}`)"
+      - traefik.http.routers.dashboard.service=api@internal
+      - traefik.http.routers.dashboard.entrypoints=websec
+      - traefik.http.routers.dashboard.tls.certresolver=production
+      - traefik.http.routers.dashboard.tls=true
+      # - traefik.http.routers.dashboard.middlewares=auth
+      # - "traefik.http.middlewares.auth.basicauth.users=user:$$2y$$05$$ysD56g/jwpIOQFDOADyRu./Loi/Uvd3iZQMD2n1.LQ0T3/y/rbhai" # user:password
+
+  # whoami:
+  #   image: traefik/whoami
+  #   labels:
+  #     - traefik.enable=true
+  #     - "traefik.http.routers.whoami.rule=Host(`ssh.${DOMAIN_NAME}`)"
+  #     - traefik.http.routers.whoami.entrypoints=websec-exposed
+  #     - traefik.http.routers.whoami.tls=true
+  #   networks:
+  #     - revproxy
+networks:
+  revproxy:
+    external: true

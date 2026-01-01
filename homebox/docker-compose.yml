@@ -28,11 +28,19 @@ services:
       - revproxy
     volumes:
       - vdata:/data/
-      - ${CURRENCY_CFG_PATH}:/config/currency.cfg.json
+      - ./config/currency.cfg:/config/currency.cfg.json
     ports:
       - 127.0.0.1:${PORT}:7745
     depends_on:
       - homebox-postgres
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.homebox.loadbalancer.server.port=7745
+      - traefik.http.routers.homebox.rule=Host(`${HOMEBOX_SUBDOMAIN}.${DOMAIN_NAME}`)
+      - traefik.http.routers.homebox.entrypoints=websec-exposed
+      - traefik.http.routers.homebox.service=homebox
+      - traefik.http.routers.homebox.tls=true
+      - traefik.http.routers.homebox.tls.certresolver=production
 
   homebox-postgres:
     image: postgres:16-alpine

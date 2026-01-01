@@ -33,6 +33,16 @@ services:
         depends_on:
             - linkwarden-postgres
 
+        # Traefik config
+        labels:
+          - traefik.enable=true
+          - traefik.http.services.linkwarden.loadbalancer.server.port=3000
+          - traefik.http.routers.linkwarden.rule=Host(`${LINKWARDEN_SUBDOMAIN}.${DOMAIN_NAME}`)
+          - traefik.http.routers.linkwarden.entrypoints=websec-exposed
+          - traefik.http.routers.linkwarden.service=linkwarden
+          - traefik.http.routers.linkwarden.tls=true
+          - traefik.http.routers.linkwarden.tls.certresolver=production
+
 networks:
     revproxy:
         external: true

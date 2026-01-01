@@ -3,7 +3,7 @@ services:
   xray:
     image: teddysun/xray:latest
     container_name: xray
-    restart: always
+    restart: unless-stopped
 
     networks:
       - revproxy # reverse proxy network
@@ -11,8 +11,20 @@ services:
     volumes:
       - vxrayconfig:/etc/xray:ro
       - vlogs:/var/log/xray
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/etc/timezone:/etc/timezone:ro"
     ports:
       - "127.0.0.1:${XRAY_PORT}:${XRAY_PORT}"
+
+    # Traefik config
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.xray.rule=Host(`${DOMAIN_NAME}`)
+      - traefik.tcp.routers.xray.rule=HostSNI(`github.com`)
+      - traefik.tcp.routers.xray.entrypoints=websec-exposed
+      - traefik.tcp.routers.xray.tls.passthrough=true
+      - traefik.tcp.services.xray.loadbalancer.server.port=${XRAY_PORT}
+      - traefik.tcp.routers.xray.service=xray
 
 networks:
   revproxy:

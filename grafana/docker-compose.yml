@@ -13,6 +13,14 @@ services:
     environment:
       - TZ=$TZ
       - GF_SERVER_ROOT_URL=https://${GRAFANA_DOMAIN}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.grafana.rule=Host(`${GRAFANA_SUBDOMAIN}.${DOMAIN_NAME}`)
+      - traefik.http.routers.grafana.entrypoints=websec-exposed,websec
+      - traefik.http.services.grafana.loadbalancer.server.port=3000
+      - traefik.http.routers.grafana.service=grafana
+      - traefik.http.routers.grafana.tls=true
+      - traefik.http.routers.grafana.tls.certresolver=production
 
   prometheus:
     image: prom/prometheus:latest

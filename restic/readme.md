@@ -16,10 +16,26 @@ sudo chown root:root /etc/restic/*.restic.env
 sudo chmod 700 /etc/restic/*.restic.env
 ```
 
+### Restic installation:
+`wget https://github.com/restic/restic/releases/download/<persistent>/restic<...>.bz2`
+`bunzip2 <filename>.bz2`
+`sudo mv restic<version> /usr/bin`
+`sudo ln -s /usr/bin/restic<version> /usr/bin/restic`
+
+NOTE: it's better to download restic from github releases, 
+because some package managers can provide outdated restic version (ubuntu)
+
 ## Run
 
 Being in *restic* directory, run:
 `docker compose --env-file ./config/.secrets.env -f docker-compose.yml up -d`
+
+### Metrics
+
+To run containers for metrics collection (on the same node with restic server):
+
+`RESTIC_LITH_REPOSITORY="rest:http://<user>:<password>@<restic-server-node>:8000/<user>/"  RESTIC_RPI_REPOSITORY="rest:http://<user>:<password>@<restic-server-node>:8000/<user>/" docker compose --env-file ./config/.secrets.env up -d`
+or use it with secrets manager (`bws run -- 'docker compose ...'`)
 
 ## How does it correspond with services?
 

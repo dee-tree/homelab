@@ -15,6 +15,28 @@ services:
       - homeassistant
     ports:
       - 127.0.0.1:${PORT}:8123
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.homeassistant.loadbalancer.server.port=8123
+      - traefik.http.services.homeassistant.loadBalancer.passHostHeader=true
+      - traefik.http.routers.homeassistant.rule=Host(`${HOMEASSISTANT_SUBDOMAIN}.${DOMAIN_NAME}`)
+      - traefik.http.routers.homeassistant.entrypoints=websec-exposed
+      - traefik.http.routers.homeassistant.service=homeassistant
+      - traefik.http.routers.homeassistant.tls=true
+      - traefik.http.routers.homeassistant.tls.certresolver=production
+
+      - traefik.http.routers.homeassistant.middlewares=proxy-headers
+      
+      - traefik.http.middlewares.proxy-headers.headers.frameDeny=true
+      - traefik.http.middlewares.proxy-headers.headers.sslRedirect=true
+      - traefik.http.middlewares.proxy-headers.headers.browserXssFilter=true
+      - traefik.http.middlewares.proxy-headers.headers.contentTypeNosniff=true
+      - traefik.http.middlewares.proxy-headers.headers.forceSTSHeader=true
+      - traefik.http.middlewares.proxy-headers.headers.stsIncludeSubdomains=true
+      - traefik.http.middlewares.proxy-headers.headers.stsPreload=true
+      - traefik.http.middlewares.proxy-headers.headers.stsSeconds=15552000
+      - traefik.http.middlewares.proxy-headers.headers.customFrameOptionsValue=SAMEORIGIN
+      - traefik.http.middlewares.proxy-headers.headers.customRequestHeaders.X-Forwarded-Proto=https
 
   zigbee2mqtt:
         container_name: zigbee2mqtt

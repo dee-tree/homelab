@@ -14,6 +14,48 @@ services:
       - revproxy
     volumes:
       - backups:/data
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.restic.loadbalancer.server.port=8000
+      - traefik.http.routers.restic.rule=Host(`${BACKUP_SUBDOMAIN}.${DOMAIN_NAME}`)
+      - traefik.http.routers.restic.entrypoints=websec,websec-exposed
+      - traefik.http.routers.restic.service=restic
+      - traefik.http.routers.restic.tls=true
+      - traefik.http.routers.restic.tls.certresolver=production
+
+  restic-exporter-rpi:
+    image: ngosang/restic-exporter:latest
+    container_name: restic-exporter-rpi
+    environment:
+      - TZ=$TZ
+      - RESTIC_REPOSITORY=$RESTIC_RPI_REPOSITORY
+      - RESTIC_PASSWORD_FILE=/etc/restic/.local-1-rpi.password.restic.env
+      - REFRESH_INTERVAL=7200 # 120 min
+      - INCLUDE_PATHS=true
+    volumes:
+      - /etc/restic:/etc/restic:ro
+    ports:
+      - "40117:8001"
+    restart: unless-stopped
+    networks:
+      - revproxy
+
+  restic-exporter-lith:
+    image: ngosang/restic-exporter:latest
+    container_name: restic-exporter-lith
+    environment:
+      - TZ=$TZ
+      - RESTIC_REPOSITORY=$RESTIC_LITH_REPOSITORY
+      - RESTIC_PASSWORD_FILE=/etc/restic/.local-1-lith.password.restic.env
+      - REFRESH_INTERVAL=7200 # 120 min
+      - INCLUDE_PATHS=true
+    volumes:
+      - /etc/restic:/etc/restic:ro
+    ports:
+      - "40118:8001"
+    restart: unless-stopped
+    networks:
+      - revproxy
 
 networks:
   revproxy:

@@ -65,6 +65,15 @@ services:
     networks:
       - paperless
       - revproxy
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.paperless.loadbalancer.server.port=8000
+      - traefik.http.routers.paperless.rule=Host(`${PAPERLESS_SUBDOMAIN}.${DOMAIN_NAME}`)
+      - traefik.http.routers.paperless.entrypoints=websec-exposed,websec
+      - traefik.http.routers.paperless.service=paperless
+      - traefik.http.routers.paperless.tls=true
+      - traefik.http.routers.paperless.tls.certresolver=production
+
 
   gotenberg:
     image: docker.io/gotenberg/gotenberg:8.19
