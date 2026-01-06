@@ -18,8 +18,8 @@ services:
     volumes:
       - ./config/acquis.yaml:/etc/crowdsec/acquis.yaml
       - /var/log:/var/log:ro
-      - ./config/data:/var/lib/crowdsec/data/
-      - ./config/config:/etc/crowdsec/
+      - vdata:/var/lib/crowdsec/data/
+      - vconfig:/etc/crowdsec/
     networks:
       - revproxy
 
@@ -27,3 +27,16 @@ networks:
   revproxy:
     external: true
 
+volumes:
+  vconfig:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${CROWDSEC_V_CONFIG_PATH}
+  vdata:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${CROWDSEC_V_DATA_PATH}

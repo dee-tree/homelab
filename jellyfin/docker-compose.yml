@@ -8,8 +8,8 @@ services:
       - ${JELLYFIN_PORT}:8096/tcp
       # - 7359:7359/udp
     volumes:
-      - ./config/config:/config
-      - ./cache:/cache
+      - vconfig:/config
+      - vcache:/cache
       - /data/media:/media
 
       # Optional - extra fonts to be used during transcoding with subtitle burn-in
@@ -42,3 +42,16 @@ networks:
   revproxy:
     external: true
 
+volumes:
+  vconfig:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${JELLYFIN_V_CONFIG_PATH}
+  vcache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${JELLYFIN_V_CACHE_PATH}
