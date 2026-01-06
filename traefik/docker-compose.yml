@@ -13,7 +13,10 @@ services:
       - 88:88 # exposed with port forwarding on network
       - 444:444 # exposed with port forwarding on network
     environment:
-      ACME_EMAIL: ${ACME_EMAIL}
+      ACME_EMAIL: $ACME_EMAIL
+      CROWDSEC_TRAEFIK_LAPI_KEY: $CROWDSEC_TRAEFIK_LAPI_KEY
+      TRUSTED_IP1: $TRUSTED_IP1
+      TRUSTED_IP2: $TRUSTED_IP2
 
     volumes:
       - /etc/localtime:/etc/localtime:ro # Sync time
@@ -23,6 +26,7 @@ services:
       - ./config/acme.json:/etc/traefik/certs/acme.json # SSL certificates
       - ./config/acme-staging.json:/etc/traefik/certs/acme-staging.json # SSL certificates
       - /var/log/traefik:/var/log/traefik # Logs
+      - ./config/dynamic:/etc/traefik/dynamic/conf # Routing/dynamic configuration
     healthcheck:
       test: ["CMD", "traefik", "healthcheck", "--ping"]
       interval: 10s
@@ -35,6 +39,9 @@ services:
       - --providers.docker.exposedbydefault=false
       - --providers.docker.network=revproxy
 
+      # Dynamic/routing configuration
+      - --providers.file.directory=/etc/traefik/dynamic/conf
+
       # Entry points
       # # "exposed" services are accessible from Internet
       - --entrypoints.web-exposed.address=:88
@@ -45,7 +52,8 @@ services:
       - --entrypoints.websec-exposed.address=:444
       - --entrypoints.websec-exposed.http.tls=true
       - --entrypoints.websec-exposed.http.tls.certresolver=production
-      - --entrypoints.websec-exposed.forwardedHeaders.trustedIPs=127.0.0.1/32, 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8
+      - --entrypoints.websec-exposed.forwardedHeaders.trustedIPs=127.0.0.1/32, 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8, 172.21.0.0/16
+      - --entrypoints.websec-exposed.http.middlewares=crowdsec@file
 
       # # "non-exposed" services are accessible within LAN
       - --entrypoints.web.address=:80
@@ -55,7 +63,7 @@ services:
 
       - --entrypoints.websec.address=:443
       - --entrypoints.websec.http.tls=true
-      - --entrypoints.websec.http.tls.certresolver=production
+      # - --entrypoints.websec.http.tls.certresolver=production
       - --entrypoints.websec.forwardedHeaders.trustedIPs=127.0.0.1/32, 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8
 
       # Certificates
@@ -88,6 +96,11 @@ services:
       - --api.insecure=false
 
       - --ping # for healthcheck
+
+      # crowdsec plugin
+      # https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+      - "--experimental.plugins.bouncer.modulename=github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"
+      - "--experimental.plugins.bouncer.version=v1.5.0-beta1"
 
     labels:
       - traefik.enable=true

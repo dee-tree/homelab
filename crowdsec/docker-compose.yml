@@ -1,0 +1,29 @@
+services:
+  crowdsec:
+    image: crowdsecurity/crowdsec
+    container_name: crowdsec
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - 127.0.0.1:${CROWDSEC_API_PORT}:8080
+      # - 127.0.0.1:${CROWDSEC_PROMETHEUS_PORT}:6060
+    environment:
+      COLLECTIONS: "crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/whitelist-good-actors crowdsecurity/iptables crowdsecurity/linux crowdsecurity/sshd crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-generic-rules"
+      GID: $GID
+      CUSTOM_HOSTNAME: $HOSTNAME
+      CROWDSEC_TRAEFIK_LAPI_KEY: $CROWDSEC_TRAEFIK_LAPI_KEY
+      TRUSTED_IP1: $TRUSTED_IP1
+      TRUSTED_IP2: $TRUSTED_IP2
+    volumes:
+      - ./config/acquis.yaml:/etc/crowdsec/acquis.yaml
+      - /var/log:/var/log:ro
+      - ./config/data:/var/lib/crowdsec/data/
+      - ./config/config:/etc/crowdsec/
+    networks:
+      - revproxy
+
+networks:
+  revproxy:
+    external: true
+

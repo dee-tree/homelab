@@ -1,0 +1,27 @@
+http:
+  middlewares:
+    crowdsec:
+      plugin:
+        bouncer:
+          enabled: true
+          logLevel: INFO
+          LogFilePath: /var/log/traefik/crowdsec.log
+          crowsecMode: stream
+          crowdsecAppsecEnabled: true
+          crowdsecAppsecHost: crowdsec:7422
+          crowdsecAppsecFailureBlock: true
+          crowdsecAppsecUnreachableBlock: true
+          crowdsecLapiKey: {{ env "CROWDSEC_TRAEFIK_LAPI_KEY" }}
+          crowdsecLapiHost: crowdsec:8080
+          crowdsecLapiPath: /
+          forwardedHeadersTrustedIPs:
+            - 10.0.35.4/32
+            - 192.168.0.0/16
+            - 10.0.0.0/8
+            - 172.16.0.0/12
+            - 172.21.0.0/12
+          clientTrustedIPs:
+            - 192.168.2.0/24
+            - 192.168.1.0/24
+            - {{ env "TRUSTED_IP1" }}
+            - {{ env "TRUSTED_IP2" }}

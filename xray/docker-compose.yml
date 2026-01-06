@@ -20,7 +20,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.routers.xray.rule=Host(`${DOMAIN_NAME}`)
-      - traefik.tcp.routers.xray.rule=HostSNI(`github.com`)
+      - traefik.tcp.routers.xray.rule=HostSNI(`${XRAY_SNI_DOMAIN}`)
       - traefik.tcp.routers.xray.entrypoints=websec-exposed
       - traefik.tcp.routers.xray.tls.passthrough=true
       - traefik.tcp.services.xray.loadbalancer.server.port=${XRAY_PORT}

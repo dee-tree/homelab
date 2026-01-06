@@ -29,6 +29,7 @@
 - 50114 (node-exporter)
 - 50115 (zigbee2mqtt)
 - 50116 (restic)
+- 50119 (jellyfin)
 
 ### Hidden docker container ports on networks
 
@@ -47,3 +48,5 @@
 - 40114 (node-exporter)
 - 40115 (zigbee2mqtt)
 - 40116 (restic)
+- 40119 (jellyfin)
+- 40120 (crowdsec API)
