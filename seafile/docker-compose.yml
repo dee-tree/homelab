@@ -5,12 +5,12 @@ services:
     restart: always
     environment:
       - MYSQL_ROOT_PASSWORD=${SEAFILE_DB_INIT_ROOT_PASSWORD:-}
-      - MYSQL_LOG_CONSOLE=true
       - MARIADB_AUTO_UPGRADE=1
       - MARIADB_USER=${SEAFILE_DB_USER}
       - MARIADB_PASSWORD=${SEAFILE_DB_PASSWORD}
     volumes:
       - mariadbdata:/var/lib/mysql
+      - /var/log/seafile/db:/var/log/mysql
     networks:
       - seafile
     healthcheck:
@@ -27,89 +27,64 @@ services:
       timeout: 5s
       retries: 10
 
-  memcached:
-    image: memcached:1.6
-    container_name: seafile-memcached
-    restart: always
-    entrypoint: memcached -m 256
-    networks:
-      - seafile
-
 # instead of memcached
-  # seafile-redis:
-  #   image: redis
-  #   container_name: seafile-redis
-  #   restart: unless-stopped
-  #   command:
-  #     - /bin/sh
-  #     - -c
-  #     - redis-server --requirepass "$$REDIS_PASSWORD"
-  #   environment:
-  #     - REDIS_PASSWORD=${REDIS_PASSWORD:-}
-  #   networks:
-  #     - seafile
-
-  elasticsearch:
-    image: elasticsearch:8.16.4
-    container_name: seafile-elasticsearch
-    restart: always
+  seafile-redis:
+    image: redis
+    container_name: seafile-redis
+    restart: unless-stopped
+    command:
+      - /bin/sh
+      - -c
+      - redis-server --requirepass "$$REDIS_PASSWORD"
     environment:
-      - discovery.type=single-node
-      - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
-      - "xpack.security.enabled=false"
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    mem_limit: 4g
-    volumes:
-      - elasticsearch:/usr/share/elasticsearch/data"
+      - REDIS_PASSWORD=${SEAFILE_REDIS_PASSWORD:-}
     networks:
       - seafile
 
 # instead of elasticsearch
-  # seasearch:
-  #   image: ${SEASEARCH_IMAGE:-seafileltd/seasearch:1.0-latest}
-  #   container_name: seafile-seasearch
-  #   restart: unless-stopped
-  #   volumes:
-  #     - ${SS_DATA_PATH:-/opt/seasearch-data}:/opt/seasearch/data
-  #   environment:
-  #     - SS_FIRST_ADMIN_USER=${INIT_SS_ADMIN_USER:-}
-  #     - SS_FIRST_ADMIN_PASSWORD=${INIT_SS_ADMIN_PASSWORD:-}
-  #     - SS_MAX_OBJ_CACHE_SIZE=${SS_MAX_OBJ_CACHE_SIZE:-10GB}
-  #     - SS_STORAGE_TYPE=${SS_STORAGE_TYPE:-disk}
-  #     - S3_SS_BUCKET=${S3_SS_BUCKET:-}
-  #     - S3_KEY_ID=${S3_KEY_ID:-}
-  #     - S3_USE_V4_SIGNATURE=${S3_USE_V4_SIGNATURE:-true}
-  #     - S3_SECRET_KEY=${S3_SECRET_KEY:-}
-  #     - S3_HOST=${S3_HOST:-}
-  #     - S3_USE_HTTPS=${S3_USE_HTTPS:-true}
-  #     - S3_PATH_STYLE_REQUEST=${S3_PATH_STYLE_REQUEST:-true}
-  #     - S3_AWS_REGION=${S3_AWS_REGION:-us-east-1}
-  #     - S3_SSE_C_KEY=${S3_SSE_C_KEY:-}
-  #     - SS_LOG_TO_STDOUT=${SS_LOG_TO_STDOUT:-false}
-  #     - SS_LOG_DIR=${SS_LOG_DIR:-/opt/seasearch/data/log}
-  #     - SS_LOG_LEVEL=${SS_LOG_LEVEL:-info}
-  #     # SeaSeasrch Proxy
-  #     - SEAFILE_LOG_TO_STDOUT=${SEAFILE_LOG_TO_STDOUT:-false}
-  #     - SEATABLE_LOG_TO_STDOUT=${SEATABLE_LOG_TO_STDOUT:-false}
-  #     # for cluster
-  #     - SS_SERVER_MODE=${SS_SERVER_MODE:-}
-  #     - SS_CLUSTER_ID=${SS_CLUSTER_ID:-}
-  #     - SS_CLUSTER_PROXY_HOST=${SS_CLUSTER_PROXY_HOST:-0.0.0.0}
-  #     - SS_CLUSTER_PROXY_PORT=${SS_CLUSTER_PROXY_PORT:-4082}
-  #     - SS_CLUSTER_MANAGER_ADDR=${SS_CLUSTER_MANAGER_ADDR:-127.0.0.1:4081}
-  #     - SS_ETCD_USERNAME=${SS_ETCD_USERNAME:-}
-  #     - SS_ETCD_PASSWORD=${SS_ETCD_PASSWORD:-}
-  #     - SS_ETCD_ENDPOINTS=${SS_ETCD_ENDPOINTS:-127.0.0.1:2379}
-  #     - SS_ETCD_PREFIX=${SS_ETCD_PREFIX:-/zinc}
-  #     - SS_CLUSTER_PROXY_LOG_DIR=${SS_CLUSTER_PROXY_LOG_DIR:--/opt/seasearch/data/log}
-  #     - SS_CLUSTER_MANAGER_HOST=${SS_CLUSTER_MANAGER_HOST:-0.0.0.0}
-  #     - SS_CLUSTER_MANAGER_PORT=${SS_CLUSTER_MANAGER_PORT:-4081}
-  #   networks:
-  #     - seafile-net
+  seasearch:
+    image: seafileltd/seasearch-nomkl:1.0-latest
+    container_name: seafile-seasearch
+    restart: unless-stopped
+    volumes:
+      - vcache:/opt/seasearch/data
+      - /var/log/seafile/seasearch:/var/log/seafile/seasearch
+    environment:
+      - SS_FIRST_ADMIN_USER=${SEAFILE_INIT_SEASEARCH_ADMIN_USER:-}
+      - SS_FIRST_ADMIN_PASSWORD=${SEAFILE_INIT_SEASEARCH_ADMIN_PASSWORD:-}
+      - SS_MAX_OBJ_CACHE_SIZE=${SS_MAX_OBJ_CACHE_SIZE:-10GB}
+      - SS_STORAGE_TYPE=${SS_STORAGE_TYPE:-disk}
+      # S3: set if use S3 storage
+      - S3_SS_BUCKET=${S3_SS_BUCKET:-}
+      - S3_KEY_ID=${S3_KEY_ID:-}
+      - S3_USE_V4_SIGNATURE=${S3_USE_V4_SIGNATURE:-true}
+      - S3_SECRET_KEY=${S3_SECRET_KEY:-}
+      - S3_HOST=${S3_HOST:-}
+      - S3_USE_HTTPS=${S3_USE_HTTPS:-true}
+      - S3_PATH_STYLE_REQUEST=${S3_PATH_STYLE_REQUEST:-true}
+      - S3_AWS_REGION=${S3_AWS_REGION:-us-east-1}
+      - S3_SSE_C_KEY=${S3_SSE_C_KEY:-}
+      - SS_LOG_TO_STDOUT=false
+      - SS_LOG_DIR=/var/log/seafile/seasearch
+      - SS_LOG_LEVEL=info
+      # SeaSeasrch Proxy
+      - SEAFILE_LOG_TO_STDOUT=false
+      - SEATABLE_LOG_TO_STDOUT=false
+      # for cluster
+      - SS_SERVER_MODE=${SS_SERVER_MODE:-}
+      - SS_CLUSTER_ID=${SS_CLUSTER_ID:-}
+      - SS_CLUSTER_PROXY_HOST=${SS_CLUSTER_PROXY_HOST:-0.0.0.0}
+      - SS_CLUSTER_PROXY_PORT=${SS_CLUSTER_PROXY_PORT:-4082}
+      - SS_CLUSTER_MANAGER_ADDR=${SS_CLUSTER_MANAGER_ADDR:-127.0.0.1:4081}
+      - SS_ETCD_USERNAME=${SS_ETCD_USERNAME:-}
+      - SS_ETCD_PASSWORD=${SS_ETCD_PASSWORD:-}
+      - SS_ETCD_ENDPOINTS=${SS_ETCD_ENDPOINTS:-127.0.0.1:2379}
+      - SS_ETCD_PREFIX=${SS_ETCD_PREFIX:-/zinc}
+      - SS_CLUSTER_PROXY_LOG_DIR=${SS_CLUSTER_PROXY_LOG_DIR:--/opt/seasearch/data/log}
+      - SS_CLUSTER_MANAGER_HOST=${SS_CLUSTER_MANAGER_HOST:-0.0.0.0}
+      - SS_CLUSTER_MANAGER_PORT=${SS_CLUSTER_MANAGER_PORT:-4081}
+    networks:
+      - seafile
 
   seafile:
     image: seafileltd/seafile-pro-mc:13.0-latest # seafile pro edition
@@ -119,6 +94,9 @@ services:
       - "${PORT}:80"
     volumes:
       - vdata:/shared
+      # - /var/log/seafile/seafile:/opt/seafile/logs
+      - /var/log/seafile:/shared/seafile/logs
+      - /var/log/seafile/system:/shared/logs/var-log
     environment:
       - SEAFILE_MYSQL_DB_HOST=seafile-mariadb
       - SEAFILE_MYSQL_DB_PORT=${SEAFILE_MYSQL_DB_PORT:-3306}
@@ -137,16 +115,14 @@ services:
       - SITE_ROOT=/
       - NON_ROOT=${NON_ROOT:-false}
       - JWT_PRIVATE_KEY=${SEAFILE_JWT_PRIVATE_KEY:?Variable is not set or empty}
-      - SEAFILE_LOG_TO_STDOUT=${SEAFILE_LOG_TO_STDOUT:-false}
+      - SEAFILE_LOG_TO_STDOUT=false
       - ENABLE_SEADOC=${ENABLE_SEADOC:-true}
       - SEADOC_SERVER_URL=${SEAFILE_SERVER_PROTOCOL:-http}://${SEAFILE_DOMAIN:?Variable is not set or empty}/sdoc-server
 
-      - CACHE_PROVIDER=memcached
-      - REDIS_HOST=${REDIS_HOST:-redis}
+      - CACHE_PROVIDER=redis
+      - REDIS_HOST=seafile-redis
       - REDIS_PORT=${REDIS_PORT:-6379}
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
-      - MEMCACHED_HOST=${MEMCACHED_HOST:-memcached}
-      - MEMCACHED_PORT=${MEMCACHED_PORT:-11211}
+      - REDIS_PASSWORD=${SEAFILE_REDIS_PASSWORD}
       - SEAF_SERVER_STORAGE_TYPE=${SEAF_SERVER_STORAGE_TYPE:-}
 
       ### Optional S3 config
@@ -175,9 +151,9 @@ services:
     depends_on:
       seafile-mariadb:
         condition: service_healthy
-      memcached:
+      seafile-redis:
         condition: service_started
-      elasticsearch:
+      seasearch:
         condition: service_started
     networks:
       - seafile
@@ -190,7 +166,6 @@ services:
       - traefik.http.routers.seafile.service=seafile
       - traefik.http.routers.seafile.tls=true
       - traefik.http.routers.seafile.tls.certresolver=production
-
 
 networks:
   seafile:
@@ -211,15 +186,10 @@ volumes:
       type: none
       o: bind
       device: ${VMARIADB_DATA_PATH}
-  elasticsearch:
+  vcache:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${VELASTIC_SEARCH_DATA_PATH}
-  # vlogs:
-  #   driver: local
-  #   driver_opts:
-  #     type: none
-  #     o: bind
-  #     device: ${LOGS_PATH}
+      device: ${VCACHE_DATA_PATH}
+

@@ -12,11 +12,11 @@ OnFailure=backup-restic-failure@%i.service
 [Service]
 Type=oneshot
 WorkingDirectory=/root
-ExecStartPre=/usr/bin/docker stop seafile seafile-elasticsearch seafile-memcached seafile-mariadb
+ExecStartPre=/usr/bin/docker stop seafile seafile-seasearch seafile-redis seafile-mariadb
 ExecStart=/usr/bin/restic backup ${SEAFILE_DATA_PATH}/conf ${SEAFILE_DATA_PATH}/seafile/conf ${SEAFILE_DATA_PATH}/seafile/seafile-data ${SEAFILE_DATA_PATH}/seafile/seahub-data ${SEAFILE_DATA_DB_PATH} --tag seafile
 ExecStart=/usr/bin/restic forget --prune --keep-hourly ${BACKUP_RETENTION_HOURLY} --keep-daily ${BACKUP_RETENTION_DAILY} --keep-weekly ${BACKUP_RETENTION_WEEKLY} --keep-monthly ${BACKUP_RETENTION_MONTHLY} --keep-yearly ${BACKUP_RETENTION_YEARLY} --tag seafile
 ExecStart=/usr/bin/restic check --read-data
-ExecStartPost=/usr/bin/docker start seafile-mariadb seafile-memcached seafile-elasticsearch seafile
+ExecStartPost=/usr/bin/docker start seafile-mariadb seafile-redis seafile-seasearch seafile
 
 EnvironmentFile=/etc/restic/.restic.env
 Environment=XDG_CACHE_HOME=/var/cache
