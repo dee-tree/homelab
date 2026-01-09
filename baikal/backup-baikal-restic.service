@@ -1,4 +1,4 @@
-# ln -s <this file> /etc/systemd/system/backup-baikal-restic.service
+# ln -s ${HOSTED_SERVICES_PATH}/baikal/backup-baikal-restic.service /etc/systemd/system/backup-baikal-restic.service
 # sudo systemctl daemon-reload
 # sudo systemctl enable --now backup-baikal-restic.timer
 # sudo systemctl start backup-baikal-restic.service

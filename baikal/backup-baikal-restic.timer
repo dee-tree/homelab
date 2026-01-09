@@ -1,4 +1,4 @@
-# ln -s <this file> /etc/systemd/system/backup-baikal-restic.timer
+# ln -s ${HOSTED_SERVICES_PATH}/baikal/backup-baikal-restic.timer /etc/systemd/system/backup-baikal-restic.timer
 
 [Unit]
 Description=Daily backups
