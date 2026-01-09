@@ -1,31 +1,47 @@
-
 services:
     couchserver:
-        image: couchdb:3.1.2
+        image: couchdb:latest
         container_name: obsidian-couchdb
         restart: always
         ports:
-            - "127.0.0.1:40103:5984"
+            - "127.0.0.1:${OBSIDIAN_COUCHDB_PORT}:5984"
         environment:
-            - COUCHDB_USER=${COUCHDB_USER}
-            - COUCHDB_PASSWORD=${COUCHDB_PW}
+            - COUCHDB_USER=${OBSIDIAN_COUCHDB_USER}
+            - COUCHDB_PASSWORD=${OBSIDIAN_COUCHDB_PASSWORD}
         volumes:
             # The files' owner will be id:5984 when you launch the image.
             # Because CouchDB writes on-the-fly configurations into local.ini.
             # So when you want to perform git pull or change something, you have to change owners back.
-            - data:/opt/couchdb/data
-            - ./data/local.ini:/opt/couchdb/etc/local.ini:ro
+            - vdata:/opt/couchdb/data
+            - ./config/local.ini:/opt/couchdb/etc/local.ini:ro
+            - /var/log/obsidian/couchdb:/var/log/couchdb
         networks:
             - revproxy
+        labels:
+            - traefik.enable=true
+            - traefik.http.routers.obsidian-livesync.rule=Host(`${OBSIDIAN_SUBDOMAIN}.${DOMAIN_NAME}`)
+            - traefik.http.routers.obsidian-livesync.entrypoints=websec-exposed,web-exposed
+            - traefik.http.services.obsidian-livesync.loadbalancer.server.port=5984
+            - traefik.http.routers.obsidian-livesync.service=obsidian-livesync
+            - traefik.http.routers.obsidian-livesync.tls=true
+            - traefik.http.routers.obsidian-livesync.tls.certresolver=production
+
+            - traefik.http.routers.obsidian-livesync.middlewares=obsidiancors
+            - traefik.http.middlewares.obsidiancors.headers.accesscontrolallowmethods=GET,PUT,POST,HEAD,DELETE
+            - traefik.http.middlewares.obsidiancors.headers.accesscontrolallowheaders=accept,authorization,content-type,origin,referer
+            - traefik.http.middlewares.obsidiancors.headers.accesscontrolalloworiginlist=app://obsidian.md,capacitor://localhost,http://localhost
+            - traefik.http.middlewares.obsidiancors.headers.accesscontrolmaxage=3600
+            - traefik.http.middlewares.obsidiancors.headers.addvaryheader=true
+            - traefik.http.middlewares.obsidiancors.headers.accessControlAllowCredentials=true
 
 networks:
   revproxy:
     external: true
 
 volumes:
-  data:
+  vdata:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${VDATAPATH}
+      device: ${VDATA_PATH}
