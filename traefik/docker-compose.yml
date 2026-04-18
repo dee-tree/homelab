@@ -47,12 +47,13 @@ services:
       - --entrypoints.web-exposed.address=:88
       - --entrypoints.web-exposed.http.redirections.entrypoint.to=websec-exposed
       - --entrypoints.web-exposed.http.redirections.entrypoint.scheme=https
-      - --entrypoints.web-exposed.forwardedHeaders.trustedIPs=127.0.0.1/32, 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8, 172.21.0.0/16
+      - --entrypoints.web-exposed.forwardedHeaders.trustedIPs=127.0.0.1/32, 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8, 172.21.0.0/16, 172.26.0.0/16
 
       - --entrypoints.websec-exposed.address=:444
       - --entrypoints.websec-exposed.http.tls=true
       - --entrypoints.websec-exposed.http.tls.certresolver=production
-      - --entrypoints.websec-exposed.forwardedHeaders.trustedIPs=127.0.0.1/32, 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8, 172.21.0.0/16
+      - --entrypoints.websec-exposed.forwardedHeaders.trustedIPs=127.0.0.1/32, 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8, 172.21.0.0/16, 172.26.0.0/16
+      - --entrypoints.websec-exposed.proxyProtocol.trustedIPs=127.0.0.1/32, 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8, 172.21.0.0/16, 172.26.0.0/16
       - --entrypoints.websec-exposed.http.middlewares=crowdsec@file
 
       # # "non-exposed" services are accessible within LAN

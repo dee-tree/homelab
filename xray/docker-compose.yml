@@ -7,38 +7,76 @@ services:
 
     networks:
       - revproxy # reverse proxy network
+    environment:
+      - TZ=$TZ
+    configs:
+      - source: xray.config.json
+        target: /etc/xray/config.json
 
     volumes:
-      - vconfig:/etc/xray:ro
       - vlogs:/var/log/xray
       - "/etc/localtime:/etc/localtime:ro"
       - "/etc/timezone:/etc/timezone:ro"
     ports:
       - "127.0.0.1:${XRAY_PORT}:${XRAY_PORT}"
 
-    # Traefik config
     labels:
+      # Subscriptions serving
+      # xray subscriptions: manage certificates with traefik, but redirect behind nginx static contents serving.
       - traefik.enable=true
-      - traefik.tcp.routers.xray.rule=HostSNI(`${XRAY_SNI_DOMAIN}`) || HostSNI(`${DOMAIN_NAME}`)
-      - traefik.tcp.routers.xray.entrypoints=websec-exposed
-      - traefik.tcp.routers.xray.tls.passthrough=true
-      - traefik.tcp.services.xray.loadbalancer.server.port=${XRAY_PORT}
-      - traefik.tcp.routers.xray.service=xray
+      - traefik.http.routers.xray-subscriptions.rule=Host(`${XRAY_SUBSCRIPTIONS_SUBDOMAIN}.${DOMAIN_NAME}`)
+      - traefik.http.services.xray-subscriptions.loadbalancer.server.url=http://nginx:50124
+      - traefik.http.routers.xray-subscriptions.entrypoints=websec-exposed,web-exposed
+      - traefik.http.routers.xray-subscriptions.service=xray-subscriptions
+      - traefik.http.routers.xray-subscriptions.tls=true
+      - traefik.http.routers.xray-subscriptions.tls.certresolver=production
+
+  # Outer-facing server. Splits connections between other services and xray.
+  # Should be facing 443/80 ports. That's why traefik should be available via other ports.
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: unless-stopped
+
+    networks:
+      - revproxy
+    environment:
+      - TZ=$TZ
+    configs:
+      - source: nginx.conf
+        target: /etc/nginx/nginx.conf
+    volumes:
+    - vxray-subscriptions:/etc/xray/subscriptions:ro
+    - vnginx-logs:/var/log/nginx
+    ports:
+    - "80:80"
+    - "443:443"
+
+include:
+  - docker-compose.nginx.yml # nginx configuration
+  - docker-compose.xray.yml # xray configuration
 
 networks:
   revproxy:
     external: true
 
 volumes:
-  vconfig:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${VXRAY_CONFIG_PATH}
   vlogs:
     driver: local
     driver_opts:
       type: none
       o: bind
       device: ${VLOGS_PATH}
+
+  vxray-subscriptions:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${VXRAY_SUBSCRIPTIONS_PATH}
+  vnginx-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${VNGINX_LOG_PATH}

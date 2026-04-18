@@ -1,0 +1,92 @@
+configs:
+  xray.config.json:
+    content: |
+      {
+          "api": {
+            "services": [
+              "HandlerService",
+              "LoggerService",
+              "StatsService"
+            ],
+            "tag": "api"
+          },
+          "log": {
+            "access": "/var/log/xray/access.log",
+            "error": "/var/log/xray/error.log",
+            "loglevel": "warning"
+          },
+          "inbounds": [
+            {
+              "port": "50101",
+              "protocol": "vless",
+              "settings": {
+                "clients": [
+                  {
+                    // vless://${XRAY_USER1_ID}@${DOMAIN_NAME}:443?security=reality&encryption=none&pbk=${XRAY_SERVER_PUBLIC_KEY}&headerType=none&fp=chrome&spx=%2F&type=tcp&flow=xtls-rprx-vision&sni=${XRAY_MASKING_SUBDOMAIN}.${DOMAIN_NAME}&sid=${XRAY_USER1_SID}#${XRAY_SERVER_PROFILE_NAME}
+                    "email": "${XRAY_USER1_NAME}",
+                    "flow": "xtls-rprx-vision",
+                    "id": "${XRAY_USER1_ID}"
+                  }
+                ],
+                "decryption": "none"
+              },
+              "sniffing": {
+                  "enabled": true,
+                  "destOverride": [
+                      "http",
+                      "tls",
+                      "quic"
+                  ]
+              },
+              "streamSettings": {
+                  "network": "raw",
+                  "security": "reality",
+                  "realitySettings": {
+                      "target": "traefik:443", // <- host as redirection target when connection is not reality
+                      "privateKey": "${XRAY_SERVER_PRIVATE_KEY}", // ${XRAY_SERVER_PUBLIC_KEY}
+                      "maxTimeDiff": 86400000, // accept only connections with client time in range of 1 day precision (to avoid time difference attack)
+                      "serverNames": [
+                        // TLS Certificate SAN names
+                        "github.com",
+                        "${XRAY_MASKING_SUBDOMAIN}.${DOMAIN_NAME}"
+                      ],
+                      "shortIds": [
+                        "${XRAY_USER1_SID}" // ${XRAY_USER1_NAME}
+                      ],
+                      "show": true,
+                      "xver": 1
+                    },
+                    "rawSettings": {
+                        "acceptProxyProtocol": true
+                    }
+              },
+              "tag": "inbound-444"
+            }
+          ],
+          "outbounds": [
+            {
+              "protocol": "freedom",
+              "tag": "direct"
+            },
+            {
+              "protocol": "blackhole",
+              "tag": "blocked"
+            }
+          ],
+          "policy": {
+            "levels": {
+              "0": {
+                "handshake": 5, // The handshake time limit when the connection is established, in seconds, the default value is 4, it is recommended to be different from the default value
+                "connIdle": 284, // Connection idle time limit in seconds, the default value is 300, it is recommended to be different from the default value
+                "statsUserDownlink": true,
+                "statsUserUplink": true
+              }
+            },
+            "system": {
+              "statsInboundDownlink": true,
+              "statsInboundUplink": true,
+              "statsOutboundDownlink": true,
+              "statsOutboundUplink": true
+            }
+          }
+      }
