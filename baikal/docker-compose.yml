@@ -13,12 +13,12 @@ services:
       - baikal
     labels:
       - traefik.enable=true
-      - traefik.http.routers.seafile.rule=Host(`${BAIKAL_SUBDOMAIN}.${DOMAIN_NAME}`)
-      - traefik.http.services.seafile.loadbalancer.server.port=80
-      - traefik.http.routers.seafile.entrypoints=websec-exposed,web-exposed
-      - traefik.http.routers.seafile.service=seafile
-      - traefik.http.routers.seafile.tls=true
-      - traefik.http.routers.seafile.tls.certresolver=production
+      - traefik.http.routers.baikal.rule=Host(`${BAIKAL_SUBDOMAIN}.${DOMAIN_NAME}`) || Host(`${XRAY_MASKING_SUBDOMAIN}.${DOMAIN_NAME}`) # for masking service with xray
+      - traefik.http.services.baikal.loadbalancer.server.port=80
+      - traefik.http.routers.baikal.entrypoints=websec-exposed,web-exposed
+      - traefik.http.routers.baikal.service=baikal
+      - traefik.http.routers.baikal.tls=true
+      - traefik.http.routers.baikal.tls.certresolver=production
 
   baikal-db:
     image: mariadb:12 # it could be mysql compatible db
