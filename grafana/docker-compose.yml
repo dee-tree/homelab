@@ -13,6 +13,13 @@ services:
     environment:
       - TZ=$TZ
       - GF_SERVER_ROOT_URL=https://${GRAFANA_DOMAIN}
+      # SMTP email setup for alerts
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=${HOST_EMAIL_SERVER}:465
+      - GF_SMTP_USER=${HOST_EMAIL_ADDRESS}
+      - GF_SMTP_PASSWORD=${HOST_EMAIL_PASSWORD}
+      - GF_SMTP_FROM_ADDRESS=${HOST_EMAIL_ADDRESS}
+      - GF_SMTP_FROM_NAME=Alert provisioner | ${HOSTNAME}
     labels:
       - traefik.enable=true
       - traefik.http.routers.grafana.rule=Host(`${GRAFANA_SUBDOMAIN}.${DOMAIN_NAME}`)
@@ -42,11 +49,15 @@ services:
     restart: always
     ports:
       - "127.0.0.1:${NODE_EXPORTER_PORT}:9100"
+    pid: host
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
       - /var/log/ups:/var/log/ups:ro
+      # systemd
+      - /run/systemd:/run/systemd:ro
+      - /var/run/dbus:/var/run/dbus:ro,rslave
       # - attach other mount mount points here
     command:
       - '--path.procfs=/host/proc'
@@ -54,6 +65,8 @@ services:
       - '--collector.textfile.directory=/var/log/ups' # for rasberry-pi 5 UPS
       - '--collector.filesystem.mount-points-exclude'
       - '^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)'
+      - '--collector.systemd'
+      - '--collector.systemd.unit-include=.+\.(service|timer)'
     networks:
       - revproxy # don't forget to create the network manually via docker
     environment:
