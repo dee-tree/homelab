@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+vars:
+  LINKWARDEN_DIR: '{{ .TASKFILE_DIR }}/linkwarden'
+
+tasks:
+  run:*:
+    desc: run hosted service
+    vars:
+      SERVICE: "{{ index .MATCH 0 }}"
+    dir: "{{ .TASKFILE_DIR }}"
+    cmds:
+      - task: run.linkwarden
+        if: '{{or (eq .SERVICE "linkwarden") (eq .SERVICE "all") (eq .SERVICE "deeberry")}}'
+
+  run.linkwarden:
+    desc: run linkwarden
+    dir: "{{ .LINKWARDEN_DIR }}"
+    cmds:
+      - bws run -- 'docker compose --env-file ./config/.secrets.env up -d'
