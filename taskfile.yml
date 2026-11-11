@@ -19,3 +19,11 @@ tasks:
     dir: "{{ .LINKWARDEN_DIR }}"
     cmds:
       - bws run -- 'docker compose --env-file ./config/.secrets.env up -d'
+
+  deploy:*:
+    desc: "deploy lab to the host. Note: ensure there is ssh config with the same hostname as target host for system-manager"
+    vars:
+      LAB: "{{ index .MATCH 0 }}"
+    dir: "{{ .TASKFILE_DIR }}"
+    cmds:
+      - cmd: "nix run github:numtide/system-manager -- switch --flake .#{{ .LAB }} --sudo --target-host {{ .LAB }}"
