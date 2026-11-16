@@ -1,0 +1,3 @@
+{
+  deelime = import ./deelime;
+}

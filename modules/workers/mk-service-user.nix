@@ -1,25 +1,33 @@
 {
+  enable,
   user,
   uid,
   gid ? uid,
   subIdStart,
   homeModule
+}: {
+  config,
+  lib,
+  pkgs,
+  ...
 }:
-{ pkgs, ... }: # arguments are supplied by system-manager
+# arguments are supplied by system-manager
 {
+  # environment.etc."homelab-deploy-marker".text =
+  # "remote-test-2026-11-13-A\n";
+
   users.groups.${user} = {
     inherit gid;
   };
 
   users.users.${user} = {
-    inherit uid;
-
+    inherit uid enable;
     group = user;
     isSystemUser = true;
 
     home = "/var/lib/${user}";
     createHome = true;
-    linger = true;
+    linger = enable;
 
     # Reserve a non-overlapping range on this host.
     subUidRanges = [
@@ -53,9 +61,7 @@
   };
 
   home-manager.users.${user} = {
-    imports = [
-      homeModule
-    ];
+    imports = [homeModule];
 
     # Keep this unchanged after initial deployment.
     home.stateVersion = "26.05";

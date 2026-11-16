@@ -1,5 +1,17 @@
 {
   "nodes": {
+    "config": {
+      "flake": false,
+      "locked": {
+        "path": "./config",
+        "type": "path"
+      },
+      "original": {
+        "path": "./config",
+        "type": "path"
+      },
+      "parent": []
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -127,6 +139,7 @@
     },
     "root": {
       "inputs": {
+        "config": "config",
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs",
         "system-manager": "system-manager"

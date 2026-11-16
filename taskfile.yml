@@ -27,3 +27,18 @@ tasks:
     dir: "{{ .TASKFILE_DIR }}"
     cmds:
       - cmd: "nix run github:numtide/system-manager -- switch --flake .#{{ .LAB }} --sudo --target-host {{ .LAB }}"
+
+  check:*:
+    desc: "Check the config without deploying it. Note: ensure there is ssh config with the same hostname as target host for system-manager"
+    vars:
+      LAB: "{{ index .MATCH 0 }}"
+    dir: "{{ .TASKFILE_DIR }}"
+    cmds:
+      - cmd: "nix build .#systemConfigs.{{ .LAB }}"
+  # as-worker:*:
+  #   desc: "Do a command as a worker"
+  #   dir: '/'
+  #   vars:
+  #     WORKER: "{{ index .MATCH 0 }}"
+  #   cmds:
+  #     - cmd:

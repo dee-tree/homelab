@@ -1,12 +1,29 @@
-{  ... }:
+{ lib, ... }:
 let
-  system = "x86_64-linux";
+  defaultSystem = "x86_64-linux";
 in
 {
-  nixpkgs.hostPlatform = system;
+  nixpkgs.hostPlatform = lib.mkDefault defaultSystem;
 
-  imports = [
-    ../../modules/nginx
-  ];
+  homelab = rec {
+    enable = true;
+    timezone = "Europe/London";
+    domain = "DOMAIN.com";
+    services = {
+      nginx = {
+        enable = false;
+      };
+      xray.enable = false;
+      xray = {
+        maskingSni = "DOMAIN.com";
+        hostname = domain;
+        privateKey = "";
+        publicKey = "";
 
+        userIds = [ "" ];
+        userNames = [ "device1" ];
+        userShortIds = [ "" ];
+      };
+    };
+  };
 }

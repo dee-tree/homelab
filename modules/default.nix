@@ -1,0 +1,7 @@
+{
+  imports = [
+    ./options
+    ./core
+    ./workers
+  ];
+}
