@@ -18,7 +18,8 @@
       scfg.userNames
       scfg.userIds);
 
-  mkShortIds = lib.concatStringsSep ",\n" scfg.userShortIds;
+  escapedShortIds = map (id: "\"${id}\"") scfg.userShortIds;
+  mkShortIds = lib.concatStringsSep ",\n" escapedShortIds;
 
   realityInbound =
     if (scfg.enableRealityInbound)

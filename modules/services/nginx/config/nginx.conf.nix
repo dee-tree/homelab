@@ -24,9 +24,9 @@ stream {
         server xray:443;
     }
 
-    # upstream fallthrough {
-    #     server traefik:443;
-    # }
+    upstream fallthrough {
+        server traefik:443;
+    }
 
     server {
         listen 443      reuseport;
@@ -76,10 +76,8 @@ access_log /var/log/nginx/top-access.bad.log proxied if=$bad_status;
 
 proxy_set_header X-Real-IP       $proxy_protocol_addr;
 proxy_set_header X-Forwarded-For $proxy_protocol_addr;
-set_real_ip_from nginx; # host, container name in this case
 
 add_header Content-Security-Policy upgrade-insecure-requests;
-real_ip_header proxy_protocol;
 
 server_tokens off;
 

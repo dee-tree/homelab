@@ -36,6 +36,8 @@ in {
   [
     "d /var/lib/traefik/acme 0700 ${cfg.user} ${cfg.user} -"
     "f /var/lib/traefik/acme/acme.json 0600 ${cfg.user} ${cfg.user} -"
+    "f /var/lib/traefik/acme/acme-staging.json 0600 ${cfg.user} ${cfg.user} -"
+    "d /var/lib/traefik/secrets 0700 ${cfg.user} ${cfg.user} -"
 
     "d /var/lib/crowdsec 0700 ${cfg.user} ${cfg.user} -"
     "d /var/lib/crowdsec/config 0700 ${cfg.user} ${cfg.user} -"

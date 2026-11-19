@@ -23,6 +23,7 @@
   users.users.${user} = {
     inherit uid enable;
     group = user;
+    extraGroups = [ "adm" ]; # for syslogs access
     isSystemUser = true;
 
     home = "/var/lib/${user}";
