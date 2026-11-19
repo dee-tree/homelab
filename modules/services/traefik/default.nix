@@ -77,12 +77,12 @@ in {
           # - --entrypoints.websec.http.tls.certresolver=production
 
           # Certificates
-          "--certificatesresolvers.staging.acme.email=${scfg.acmeEmail}"
+          "--certificatesresolvers.staging.acme.email=${scfg.acme.email}"
           "--certificatesresolvers.staging.acme.storage=${certsDir}/acme-staging.json"
           "--certificatesresolvers.staging.acme.tlschallenge=true"
           "--certificatesresolvers.staging.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
 
-          "--certificatesresolvers.production.acme.email=${scfg.acmeEmail}"
+          "--certificatesresolvers.production.acme.email=${scfg.acme.email}"
           "--certificatesresolvers.production.acme.storage=${certsDir}/acme.json"
           "--certificatesresolvers.production.acme.tlschallenge=true"
           "--certificatesresolvers.production.acme.caserver=https://acme-v02.api.letsencrypt.org/directory"

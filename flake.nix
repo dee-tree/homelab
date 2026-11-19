@@ -2,6 +2,11 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
+    flake-utils = {
+      url = "github:numtide/flake-utils";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     system-manager = {
       url = "github:numtide/system-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -12,58 +17,57 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    config = {
-      # TODO: Change config URL
-      # url = "github:dee-tree/homelab.config";
-      url = "path:./config";
-      flake = false;
+    secrets = {
+      url = "github:dee-tree/homelab.secrets";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs =
-    {
-      self,
-      nixpkgs,
-      system-manager,
-      home-manager,
-      config,
-      ...
-    }:
-    let
-      inherit (nixpkgs) lib;
-      # system = "x86_64-linux";
-      # pkgs = nixpkgs.legacyPackages.${system};
-      evalTimeSecrets = lib.recursiveUpdate (import ./config) (import "${config}");
+  outputs = {
+    self,
+    nixpkgs,
+    flake-utils,
+    system-manager,
+    home-manager,
+    secrets,
+    ...
+  }: let
+    inherit (nixpkgs) lib;
+    # system = "x86_64-linux";
+    # pkgs = nixpkgs.legacyPackages.${system};
+    configModule = lib.recursiveUpdate (import ./config) (secrets.configModule);
 
-      hostnames = builtins.attrNames (
-        lib.filterAttrs (_: type: type == "directory") (builtins.readDir ./hosts)
-      );
-      # all hosts enumeration
-      instances = lib.unique (hostnames ++ builtins.attrNames evalTimeSecrets);
+    hostnames = builtins.attrNames (
+      lib.filterAttrs (_: type: type == "directory") (builtins.readDir ./hosts)
+    );
+    # all hosts enumeration
+    instances = lib.unique (hostnames ++ builtins.attrNames configModule);
 
-      mkHost =
-        hostname:
-        let
-          secrets = evalTimeSecrets.${hostname} or { };
-        in
-        if !(builtins.elem hostname hostnames) then
-          throw "homelab: host '${hostname}' is not declared (expected hosts/${hostname}/)"
-        else
-          system-manager.lib.makeSystemConfig {
-            modules = [
-              home-manager.nixosModules.home-manager
-              self.systemModules.homelab
-              ./hosts/${hostname}
-              {
-                nixpkgs.hostPlatform = lib.mkIf (secrets ? system) secrets.system;
-                homelab = secrets;
-              }
-            ];
-          };
+    mkHost = hostname: let
+      secrets = configModule.${hostname} or {};
     in
+      if !(builtins.elem hostname hostnames)
+      then throw "homelab: host '${hostname}' is not declared (expected hosts/${hostname}/)"
+      else
+        system-manager.lib.makeSystemConfig {
+          modules = [
+            home-manager.nixosModules.home-manager
+            self.systemModules.homelab
+            ./hosts/${hostname}
+            {
+              nixpkgs.hostPlatform = lib.mkIf (secrets ? system) secrets.system;
+              homelab = secrets;
+            }
+          ];
+        };
+  in
     {
       systemModules.homelab = ./modules;
       # For each host, declare system with system-manager
       systemConfigs = lib.genAttrs instances mkHost;
+      inherit configModule;
+    }
+    // import ./shells {
+      inherit nixpkgs flake-utils;
     };
 }

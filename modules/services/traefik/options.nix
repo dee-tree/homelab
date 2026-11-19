@@ -1,7 +1,7 @@
 {lib}: let
   inherit (lib) mkOption types mkEnableOption;
 in {
-  acmeEmail = mkOption {
+  acme.email = mkOption {
     type = types.str;
     description = "email for acme";
   };

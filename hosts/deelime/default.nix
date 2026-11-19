@@ -5,25 +5,11 @@ in
 {
   nixpkgs.hostPlatform = lib.mkDefault defaultSystem;
 
-  homelab = rec {
+  homelab = {
     enable = true;
-    timezone = "Europe/London";
-    domain = "DOMAIN.com";
-    services = {
-      nginx = {
-        enable = false;
-      };
-      xray.enable = false;
-      xray = {
-        maskingSni = "DOMAIN.com";
-        hostname = domain;
-        privateKey = "";
-        publicKey = "";
-
-        userIds = [ "" ];
-        userNames = [ "device1" ];
-        userShortIds = [ "" ];
-      };
-    };
+    services.nginx.enable = true;
+    services.xray.enable = true;
+    services.traefik.enable = true;
+    services.crowdsec.enable = true;
   };
 }
