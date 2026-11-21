@@ -1,11 +1,7 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-
-    flake-utils = {
-      url = "github:numtide/flake-utils";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    flake-utils.url = "github:numtide/flake-utils";
 
     system-manager = {
       url = "github:numtide/system-manager";
@@ -17,8 +13,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     secrets = {
-      url = "github:dee-tree/homelab.secrets";
+      # Ensure ssh key is grant for github and repo is available.
+      # Otherwise, override the input in CLI: `--override-input secrets <url>`
+      url = "git+ssh://git@github.com/dee-tree/homelab.secrets.git";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -30,12 +33,13 @@
     system-manager,
     home-manager,
     secrets,
+    sops-nix,
     ...
   }: let
     inherit (nixpkgs) lib;
-    # system = "x86_64-linux";
-    # pkgs = nixpkgs.legacyPackages.${system};
-    configModule = lib.recursiveUpdate (import ./config) (secrets.configModule);
+    configModule = lib.recursiveUpdate
+      (import ./config) # low priority host-level defaults
+      secrets.configModule; # higher priority config
 
     hostnames = builtins.attrNames (
       lib.filterAttrs (_: type: type == "directory") (builtins.readDir ./hosts)
@@ -44,7 +48,7 @@
     instances = lib.unique (hostnames ++ builtins.attrNames configModule);
 
     mkHost = hostname: let
-      secrets = configModule.${hostname} or {};
+      cfg = configModule.${hostname} or {};
     in
       if !(builtins.elem hostname hostnames)
       then throw "homelab: host '${hostname}' is not declared (expected hosts/${hostname}/)"
@@ -54,20 +58,35 @@
             home-manager.nixosModules.home-manager
             self.systemModules.homelab
             ./hosts/${hostname}
+            secrets.secretsModule.${hostname}
             {
-              nixpkgs.hostPlatform = lib.mkIf (secrets ? system) secrets.system;
-              homelab = secrets;
+              nixpkgs.hostPlatform = lib.mkIf (cfg ? system) cfg.system;
+              homelab = cfg;
+            }
+            {
+              home-manager.users.worker.imports = [
+                sops-nix.homeManagerModules.sops
+              ];
             }
           ];
         };
   in
-    {
+    rec {
       systemModules.homelab = ./modules;
       # For each host, declare system with system-manager
       systemConfigs = lib.genAttrs instances mkHost;
-      inherit configModule;
+
+      # Exposed for nix eval
+      hostConfig =
+        builtins.mapAttrs
+        (_host: system: system.config.homelab)
+        systemConfigs;
     }
     // import ./shells {
       inherit nixpkgs flake-utils;
+    }
+    // import ./lib {
+      inherit (nixpkgs) lib;
+      inherit (self) systemConfigs;
     };
 }

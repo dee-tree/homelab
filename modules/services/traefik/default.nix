@@ -1,5 +1,5 @@
 # home-manager service
-{cfg, ...}: {
+{cfg, config, ...}: {
   lib,
   pkgs,
   ...
@@ -19,7 +19,7 @@ in {
 
       volumes = [
         "${crowdsecConf}:/${dynamicConfigDir}/crowdsec.yaml" # Routing/dynamic configuration
-        "/var/lib/traefik/secrets:/run/traefik/secrets:ro" # crowdsec LAPI key
+        "${cfg.services.crowdsec.traefikBouncer.apiKeyFile}:/run/traefik/secrets/crowdsec-bouncer-key:ro" # crowdsec LAPI key
         "%t/podman/podman.sock:/var/run/docker.sock"
         "/var/lib/traefik/acme/acme.json:${certsDir}/acme.json" # SSL certificates
         "/var/lib/traefik/acme/acme-staging.json:${certsDir}/acme-staging.json" # SSL certificates
@@ -130,12 +130,11 @@ in {
           RestartSec = "5s";
         };
         Unit = {
-          Requires = ["podman.socket"];
-          After = ["podman.socket"];
+          Requires = [ "podman.socket" "sops-nix.service" ];
+          After = [ "podman.socket" "sops-nix.service" ];
         };
       };
     };
-
 
     containers.webserver = lib.mkIf scfg.enable {
       image = "docker.io/nginxdemos/hello:latest";
@@ -145,7 +144,7 @@ in {
       labels = {
         "traefik.enable" = "true";
         "traefik.docker.network" = "revproxy";
-        "traefik.http.routers.webserver.rule" ="Host(`www.${cfg.domain}`)";
+        "traefik.http.routers.webserver.rule" = "Host(`www.${cfg.domain}`)";
         "traefik.http.services.webserver.loadbalancer.server.port" = "80";
         "traefik.http.routers.webserver.entrypoints" = "websec-exposed,web-exposed";
         "traefik.http.routers.webserver.service" = "webserver";

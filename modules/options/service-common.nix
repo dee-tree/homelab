@@ -24,7 +24,7 @@ in {
     };
 
     subdomain = mkOption {
-      type = types.str; # TODO: nullable type
+      type = lib.types.nullOr types.str;
       default = name;
       description = "Hosted ${name} subdomain";
     };
@@ -34,5 +34,7 @@ in {
       default = [];
       description = "Extra podman volume specs.";
     };
+
+    verbose = mkEnableOption "Should verbose logging be enabled for the ${service}";
   };
 }

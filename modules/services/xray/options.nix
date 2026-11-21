@@ -1,5 +1,24 @@
 {lib}: let
   inherit (lib) mkOption types mkEnableOption;
+
+  vlessClientOption = types.submodule {
+    options = {
+      id = mkOption {
+        type = types.str;
+        description = "vless client id";
+      };
+
+      sid = mkOption {
+        type = types.str;
+        description = "vless client short id";
+      };
+
+      username = mkOption {
+        type = types.str;
+        description = "vless client name / email";
+      };
+    };
+  };
 in {
   hostname = mkOption {
     type = types.str;
@@ -17,33 +36,16 @@ in {
     description = "Path to subscriptions URL";
   };
 
-  privateKey = mkOption {
-    type = types.str;
-    description = "Private key";
-  };
-
   publicKey = mkOption {
     type = types.str;
     description = "Public key";
   };
 
-  userIds = mkOption {
-    type = types.listOf types.str;
+  vlessClients = mkOption {
+    type = types.listOf vlessClientOption;
     default = [];
-    description = "xray users id";
+    description = "xray vless client specification";
   };
 
-  userShortIds = mkOption {
-    type = types.listOf types.str;
-    default = [];
-    description = "xray users short id";
-  };
-
-  userNames = mkOption {
-    type = types.listOf types.str;
-    default = [];
-    description = "xray users names";
-  };
-
-  enableRealityInbound = mkEnableOption "Enable reality inbound";
+  enableVlessInbound = mkEnableOption "Enable vless reality inbound";
 }

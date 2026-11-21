@@ -3,30 +3,19 @@ version: "3"
 
 vars:
   LINKWARDEN_DIR: '{{ .TASKFILE_DIR }}/linkwarden'
+  secrets: 'git+ssh://git@github.com/dee-tree/homelab.secrets.git'
 
 tasks:
-  run:*:
-    desc: run hosted service
-    vars:
-      SERVICE: "{{ index .MATCH 0 }}"
-    dir: "{{ .TASKFILE_DIR }}"
-    cmds:
-      - task: run.linkwarden
-        if: '{{or (eq .SERVICE "linkwarden") (eq .SERVICE "all") (eq .SERVICE "deeberry")}}'
-
-  run.linkwarden:
-    desc: run linkwarden
-    dir: "{{ .LINKWARDEN_DIR }}"
-    cmds:
-      - bws run -- 'docker compose --env-file ./config/.secrets.env up -d'
-
   deploy:*:
     desc: "deploy lab to the host. Note: ensure there is ssh config with the same hostname as target host for system-manager"
     vars:
       LAB: "{{ index .MATCH 0 }}"
     dir: "{{ .TASKFILE_DIR }}"
     cmds:
+      - cmd: cp flake.lock flake.lock.original
+      - cmd: nix flake lock --override-input secrets {{.secrets}}
       - cmd: "nix run github:numtide/system-manager -- switch --flake .#{{ .LAB }} --sudo --target-host {{ .LAB }}"
+      - cmd: rm flake.lock && mv flake.lock.original flake.lock
 
   check:*:
     desc: "Check the config without deploying it. Note: ensure there is ssh config with the same hostname as target host for system-manager"
@@ -35,10 +24,12 @@ tasks:
     dir: "{{ .TASKFILE_DIR }}"
     cmds:
       - cmd: "nix build .#systemConfigs.{{ .LAB }}"
-  # as-worker:*:
-  #   desc: "Do a command as a worker"
-  #   dir: '/'
-  #   vars:
-  #     WORKER: "{{ index .MATCH 0 }}"
-  #   cmds:
-  #     - cmd:
+
+  xray_uri:*:*:
+    desc: "Get xray client configuration URI. Usage: xray_uri:host:client"
+    vars:
+      HOST: "{{ index .MATCH 0 }}"
+      CLIENT: "{{ index .MATCH 1 }}"
+    dir: "{{ .TASKFILE_DIR }}"
+    cmds:
+      - "nix eval --raw .#lib.xrayClientUri.{{ .HOST }}.{{ .CLIENT }} --override-input secrets {{ .secrets }}"

@@ -52,6 +52,8 @@ in {
       description = "Domain name backed the server";
     };
 
+    verbose = mkEnableOption "Should verbose logging be enabled for the whole host";
+
     services = lib.genAttrs services (service: mkServiceOpts {options = import ../services/${service}/options.nix {inherit lib;};});
   };
 }

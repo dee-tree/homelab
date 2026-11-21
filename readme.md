@@ -1,57 +1,19 @@
-# Self-hosted recipes
+# Homelab 2.0
 
-This repo is a cookbook of various self-hosted projects as a single home lab
+Homelab that on its duty.
 
-## Projects
+- Configurable and customizable
+- Declarative
+- Reproducible
 
-### nginx
+## Usage
 
-[nginx](./nginx/)
+TBD...
 
-### Baikal
+See `taskfile.yml`
 
-[baikal](./baikal/)
+## Status
 
-### Hemmelig
+The previous, legacy version contains docker-compose declarations for the services. In the future, they will be replaced with nix modules.
 
-[hemmelig](./hemmelig/)
-
-### Linkwarden
-
-[linkwarden](./linkwarden/)
-
-### obsidian-livesync
-
-[obsidian-livesync](./obsidian-livesync/)
-
-### Portainer
-
-[portainer](./portainer/)
-
-### Seafile
-
-[seafile](./seafile/)
-
-### xray
-
-[xray](./xray/)
-
-## Backup
-
-### Kopia
-
-[kopia](./kopia/)
-
-### Restic
-
-[restic](./restic/)
-
-...
-
----
-
-### Outdated
-
-### Caddy
-
-[caddy](./caddy/)
+Currently, the following services are supported as a nix: nginx, xray, traefik, crowdsec.
