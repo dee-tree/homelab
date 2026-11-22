@@ -8,6 +8,10 @@ Homelab that on its duty.
 
 ## Usage
 
+### Prerequisites
+
+- Ensure `HOMELAB_SECRETS_REPO` variable is set and pointing to the `homelab.secrets` repo in nix inputs format. In the future, there will be a template flake in `./config/secrets`
+
 TBD...
 
 See `taskfile.yml`

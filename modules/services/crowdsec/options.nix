@@ -11,4 +11,15 @@ in {
           CrowdSec LAPI key. The file is mounted read-only into Traefik.
         '';
       };
+
+      firewallBouncer.apiKeyFile =
+          mkOption {
+            type = types.nullOr types.str;
+            default = null;
+
+            description = ''
+              Host-side runtime file containing the firewall bouncer's
+              CrowdSec LAPI key. The file is mounted read-only into Traefik.
+            '';
+          };
 }

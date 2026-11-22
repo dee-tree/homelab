@@ -3,7 +3,8 @@ version: "3"
 
 vars:
   LINKWARDEN_DIR: '{{ .TASKFILE_DIR }}/linkwarden'
-  secrets: 'git+ssh://git@github.com/dee-tree/homelab.secrets.git'
+  HOMEALB_SECRETS_REMOTE: 'git+ssh://git@github.com/dee-tree/homelab.secrets.git'
+  HOMELAB_SECRETS_REPO: '{{ .HOMELAB_SECRETS_REPO | default .HOMELAB_SECRETS_REMOTE }}'
 
 tasks:
   deploy:*:
@@ -12,8 +13,9 @@ tasks:
       LAB: "{{ index .MATCH 0 }}"
     dir: "{{ .TASKFILE_DIR }}"
     cmds:
+      - cmd: echo "Deploying homelab with '{{ .HOMELAB_SECRETS_REPO }}' secrets"
       - cmd: cp flake.lock flake.lock.original
-      - cmd: nix flake lock --override-input secrets {{.secrets}}
+      - cmd: nix flake lock --override-input secrets {{.HOMELAB_SECRETS_REPO}}
       - cmd: "nix run github:numtide/system-manager -- switch --flake .#{{ .LAB }} --sudo --target-host {{ .LAB }}"
       - cmd: rm flake.lock && mv flake.lock.original flake.lock
 
@@ -23,7 +25,7 @@ tasks:
       LAB: "{{ index .MATCH 0 }}"
     dir: "{{ .TASKFILE_DIR }}"
     cmds:
-      - cmd: "nix build .#systemConfigs.{{ .LAB }}"
+      - cmd: "nix build .#systemConfigs.{{ .LAB }} --override-input secrets {{.HOMELAB_SECRETS_REPO}}"
 
   xray_uri:*:*:
     desc: "Get xray client configuration URI. Usage: xray_uri:host:client"
@@ -32,4 +34,4 @@ tasks:
       CLIENT: "{{ index .MATCH 1 }}"
     dir: "{{ .TASKFILE_DIR }}"
     cmds:
-      - "nix eval --raw .#lib.xrayClientUri.{{ .HOST }}.{{ .CLIENT }} --override-input secrets {{ .secrets }}"
+      - "nix eval --raw .#lib.xrayClientUri.{{ .HOST }}.{{ .CLIENT }} --override-input secrets {{ .HOMELAB_SECRETS_REPO }}"

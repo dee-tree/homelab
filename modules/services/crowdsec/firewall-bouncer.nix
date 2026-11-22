@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
 
 let
-  apiKeyFile = "/var/lib/crowdsec/secrets/firewall-bouncer-api-key";
+  apiKeyFile = config.homelab.services.crowdsec.firewallBouncer.apiKeyFile;
 
   runtimeDir = "crowdsec-firewall-bouncer";
   configFile = "/run/${runtimeDir}/config.yaml";
@@ -64,9 +64,6 @@ in lib.mkIf (config.homelab.services.crowdsec.enable)
     pkgs.nftables
   ];
 
-  systemd.tmpfiles.rules = [
-    "d /var/lib/crowdsec/secrets 0700 root root -"
-  ];
 
   systemd.services.crowdsec-firewall-bouncer = {
     description = "CrowdSec host firewall bouncer";
