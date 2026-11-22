@@ -1,6 +1,6 @@
 {
   image = "docker.io/teddysun/xray";
-  label = "latest";
+  label = import ./version.nix;
 
   ip4 = "10.90.0.11";
 }

@@ -1,5 +1,5 @@
 {
   image = "docker.io/crowdsecurity/crowdsec";
-  label = "latest";
+  label = import ./version.nix;
   ip4 = "10.90.0.13";
 }

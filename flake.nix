@@ -38,7 +38,7 @@
   }: let
     inherit (nixpkgs) lib;
     configModule = lib.recursiveUpdate
-      (import ./config) # low priority host-level defaults
+      (import ./config { inherit lib; }) # low priority host-level defaults
       secrets.configModule; # higher priority config
 
     hostnames = builtins.attrNames (
