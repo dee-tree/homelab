@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" aria-labelledby="title description" height="512" role="img" viewBox="-256 -256 512 512" width="512">
+  <title id="title">Homelab</title>
+  <desc id="description">Two mirrored lambdas in violet and ice blue form a house with an ice-blue four-pane window inside a teal and green snowflake. An independent homelab repository mark.</desc>
+
+  <defs>
+    <path d="M-124.8 49.883 L-99.2 5.543 L12.8 199.532 H-38.4 L-64 155.192                       L-89.6 199.532 H-115.2 L-128 177.362 L-89.6 110.851 Z" id="arm"/>
+    <path d="M0 -64 L-69 -7 L-57 7 L-48 -0.4 V37 H-28.5 L-31 -14.5 L0 -40 Z" id="lambda"/>
+  </defs>
+  <g fill="#207676">
+    <use href="#arm"/>
+    <use href="#arm" transform="rotate(120)"/>
+    <use href="#arm" transform="rotate(240)"/>
+  </g>
+  <g fill="#459B78">
+    <use href="#arm" transform="rotate(60)"/>
+    <use href="#arm" transform="rotate(180)"/>
+    <use href="#arm" transform="rotate(300)"/>
+  </g>
+  <use fill="#8666B4" href="#lambda"/>
+  <g fill="#84B9D4">
+    <use href="#lambda" transform="scale(-1 1)"/>
+    <path d="M-13 -21h10v10h-10z M3 -21h10v10H3z M-13 -5h10V5h-10z M3 -5h10V5H3z"/>
+  </g>
+</svg>
