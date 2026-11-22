@@ -136,29 +136,29 @@ in {
       };
     };
 
-    containers.webserver = lib.mkIf scfg.enable {
-      image = "docker.io/nginxdemos/hello:latest";
-      network = [
-        "revproxy.network"
-      ];
-      labels = {
-        "traefik.enable" = "true";
-        "traefik.docker.network" = "revproxy";
-        "traefik.http.routers.webserver.rule" = "Host(`www.${cfg.domain}`)";
-        "traefik.http.services.webserver.loadbalancer.server.port" = "80";
-        "traefik.http.routers.webserver.entrypoints" = "websec-exposed,web-exposed";
-        "traefik.http.routers.webserver.service" = "webserver";
-        "traefik.http.routers.webserver.tls" = "true";
-        "traefik.http.routers.webserver.tls.certresolver" = "production";
-      };
-      autoStart = true;
-      extraConfig = {
-        Container.ContainerName = "webserver";
-        Service = {
-          Restart = "on-failure";
-          RestartSec = "5s";
-        };
-      };
-    };
+    # containers.webserver = lib.mkIf scfg.enable {
+    #   image = "docker.io/nginxdemos/hello:latest";
+    #   network = [
+    #     "revproxy.network"
+    #   ];
+    #   labels = {
+    #     "traefik.enable" = "true";
+    #     "traefik.docker.network" = "revproxy";
+    #     "traefik.http.routers.webserver.rule" = "Host(`www.${cfg.domain}`)";
+    #     "traefik.http.services.webserver.loadbalancer.server.port" = "80";
+    #     "traefik.http.routers.webserver.entrypoints" = "websec-exposed,web-exposed";
+    #     "traefik.http.routers.webserver.service" = "webserver";
+    #     "traefik.http.routers.webserver.tls" = "true";
+    #     "traefik.http.routers.webserver.tls.certresolver" = "production";
+    #   };
+    #   autoStart = true;
+    #   extraConfig = {
+    #     Container.ContainerName = "webserver";
+    #     Service = {
+    #       Restart = "on-failure";
+    #       RestartSec = "5s";
+    #     };
+    #   };
+    # };
   };
 }

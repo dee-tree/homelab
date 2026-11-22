@@ -11,5 +11,7 @@ in
     services.xray.enable = true;
     services.traefik.enable = true;
     services.crowdsec.enable = true;
+    services.radicale.enable = true; # TODO: remove radicale from deelime
+    services.radicale.verbose = true;
   };
 }
