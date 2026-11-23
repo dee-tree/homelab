@@ -65,5 +65,5 @@
     inherit homeModule;
   };
 in {
-  imports = [user ../services/crowdsec/firewall-bouncer.nix];
+  imports = [user ../services/crowdsec/firewall-bouncer.nix ./backup-reader-group.nix];
 }

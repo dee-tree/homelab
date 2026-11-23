@@ -1,19 +1,29 @@
 # Schema for homelab config.
 # The single option tree shared by the system and Home Manager layers.
-{lib, ...}: let
+{ lib, ... }:
+let
   inherit (lib) mkOption mkEnableOption types;
 
   # Restrict to characters that are safe inside nginx config and shell args.
   hostnameType = types.strMatching "[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?";
 
-  mkServiceOpts = import ./service-options.nix {
-    inherit lib;
-  };
+  mkServiceOpts =
+    serviceOptions:
+    lib.mkOption {
+      default = { };
+      type = lib.types.submodule {
+        imports = [
+          ./service-common.nix
+          serviceOptions
+        ];
+      };
+    };
 
   services = builtins.attrNames (
     lib.filterAttrs (_: type: type == "directory") (builtins.readDir ../services)
   );
-in {
+in
+{
   options.homelab = {
     enable = mkEnableOption "Enable hosting on specified node";
 
@@ -54,6 +64,8 @@ in {
 
     verbose = mkEnableOption "Should verbose logging be enabled for the whole host";
 
-    services = lib.genAttrs services (service: mkServiceOpts {options = import ../services/${service}/options.nix {inherit lib;};});
+    services = lib.genAttrs services (
+      service: mkServiceOpts { options = import ../services/${service}/options.nix { inherit lib; }; }
+    );
   };
 }

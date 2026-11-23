@@ -1,3 +1,4 @@
+# System-manager module
 { config, lib, pkgs, ... }:
 
 let

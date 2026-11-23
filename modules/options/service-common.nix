@@ -2,10 +2,12 @@
   lib,
   name,
   ...
-}: let
+}:
+let
   inherit (lib) mkEnableOption mkOption types;
   service = name;
-in {
+in
+{
   options = {
     enable = mkEnableOption "Enable ${service} service";
 
@@ -31,9 +33,11 @@ in {
 
     volumes = mkOption {
       type = types.listOf types.str;
-      default = [];
+      default = [ ];
       description = "Extra podman volume specs.";
     };
+
+    backup = import ./backup-exporter.nix { inherit lib; };
 
     verbose = mkEnableOption "Should verbose logging be enabled for the ${service}";
   };
