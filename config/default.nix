@@ -1,4 +1,8 @@
-{lib, ...}: let
+{
+  lib,
+  pkgs,
+  ...
+}: let
   hostnames = builtins.attrNames (
     lib.filterAttrs (_: type: type == "directory") (builtins.readDir ../hosts)
   );
@@ -8,7 +12,9 @@
   mkHostConfig = host: {
     services = lib.genAttrs services (
       service:
-        import ./services/${service}
+        import ./services/${service} {
+          inherit lib pkgs;
+        }
     );
   };
 in (lib.genAttrs hostnames mkHostConfig)

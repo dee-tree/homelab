@@ -3,28 +3,23 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.homelab;
   enabledExporters = lib.filterAttrs (_: scfg: (scfg.backup.exporter.enable or false)) cfg.services;
 
-  mkExport =
-    service: b:
-    let
-      exportCommand =
-        if b.exportCommand == null then
-          ''
-            for src in ${lib.escapeShellArgs (map toString b.sourcePaths)}; do
-              cp -a --reflink=auto --parents -- "$src" "$EXPORT_DIR/"
-            done
-          ''
-        else
-          b.exportCommand;
-    in
+  mkExport = service: b: let
+    exportCommand =
+      if b.exportCommand == null
+      then ''
+        for src in ${lib.escapeShellArgs (map toString b.sources)}; do
+          cp -a --reflink=auto --parents -- "$src" "$EXPORT_DIR/"
+        done
+      ''
+      else b.exportCommand;
+  in
     pkgs.writeShellApplication {
       name = "export-${service}";
-      runtimeInputs =
-        with pkgs;
+      runtimeInputs = with pkgs;
         [
           gnutar
           zstd
@@ -42,9 +37,7 @@ let
         mv "$work" "$STATE_DIRECTORY/current"
       '';
     };
-
-in
-{
+in {
   assertions =
     (lib.mapAttrsToList (service: scfg: {
       assertion =
@@ -52,9 +45,15 @@ in
       message = "${service} service has neither `backup.exporter.enable` nor `backup.exporter.disableWithReason` specified";
     }) (lib.filterAttrs (_: scfg: (scfg.enable or false)) cfg.services)) # TODO: add persistentPaths to filter
     ++ (lib.mapAttrsToList (service: scfg: {
-      assertion = scfg.backup.exporter.exportCommand != null || scfg.backup.exporter.sourcePaths != [ ];
-      message = "${service} service should set either `backup.exporter.exportCommand` or `backup.exporter.sourcePaths`";
-    }) enabledExporters);
+        assertion = scfg.backup.exporter.exportCommand != null || scfg.backup.exporter.sources != [];
+        message = "${service} service should set either `backup.exporter.exportCommand` or `backup.exporter.sourcePaths`";
+      })
+      enabledExporters);
+
+  # # Bridge for passing hostConfig into home-manager module
+  # _module.args.hostConfig = config.homelab;
+
+  imports = [./backup-reader-group.nix ./worker.nix];
 
   environment.etc."sudoers.d/backup-export" = {
     mode = "0440";
@@ -64,22 +63,27 @@ in
     '';
   };
 
-  systemd.services = lib.mapAttrs' (
-    service: scfg:
-    let
-      b = scfg.backup.exporter;
-    in
-    lib.nameValuePair "backup-export-${service}" {
-      serviceConfig = {
-        Type = "oneshot";
-        Group = "backup-readers";
-        UMask = "0027";
-        StateDirectory = "backup-export/${service}"; # resolved into /var/lib/backup-export for system service
-        StateDirectoryMode = "0750";
-        ExecStartPre = lib.optional (b.preCommand != null) b.preCommand;
-        ExecStart = "${mkExport service b}/bin/export-${service}";
-        ExecStopPost = lib.optional (b.postCommand != null) b.postCommand;
-      };
-    }
-  ) enabledExporters;
+  systemd.services =
+    lib.mapAttrs' (
+      service: scfg: let
+        b = scfg.backup.exporter;
+      in
+        lib.nameValuePair "backup-export-${service}" {
+          serviceConfig = {
+            Type = "oneshot";
+            Group = "backup-readers";
+            UMask = "0027";
+            StateDirectory = "backup-export/${service}"; # resolved into /var/lib/backup-export for system service
+            StateDirectoryMode = "0750";
+            ExecStartPre = lib.optional (b.preCommand != null) b.preCommand;
+            ExecStart = "${mkExport service b}/bin/export-${service}";
+            ExecStopPost = lib.optional (b.postCommand != null) b.postCommand;
+          };
+        }
+    )
+    enabledExporters;
+
+  systemd.tmpfiles.rules = [
+    "d /tmp/homelab/restic/dummy 0700 backup backup - -"
+  ];
 }

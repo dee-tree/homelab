@@ -7,7 +7,9 @@
   cfg = config.homelab;
   mkServiceUser = import ./mk-service-user.nix;
   services = builtins.attrNames (
-    lib.filterAttrs (_: type: type == "directory") (builtins.readDir ../services)
+    # NOTE: restic is managed by `backup` user.
+    # TODO: consider to make obvious mapping between service-to-user correspondence.
+    lib.filterAttrs (name: type: type == "directory" && name != "restic") (builtins.readDir ../services)
   );
 
   homeModule = {config, ...}: let
@@ -59,11 +61,11 @@
 
   user = mkServiceUser {
     inherit (cfg) enable;
-    user = cfg.user;
-    uid = cfg.userId;
-    subIdStart = cfg.subIdStart;
+    user = cfg.users.worker.name;
+    uid = cfg.users.worker.id;
+    subIdStart = cfg.users.worker.subIdStart;
     inherit homeModule;
   };
 in {
-  imports = [user ../services/crowdsec/firewall-bouncer.nix ./backup-reader-group.nix];
+  imports = [user ../services/crowdsec/firewall-bouncer.nix];
 }

@@ -37,19 +37,15 @@
     ...
   }: let
     inherit (nixpkgs) lib;
-    configModule = lib.recursiveUpdate
-      (import ./config { inherit lib; }) # low priority host-level defaults
-      secrets.configModule; # higher priority config
 
     hostnames = builtins.attrNames (
       lib.filterAttrs (_: type: type == "directory") (builtins.readDir ./hosts)
     );
     # all hosts enumeration
-    instances = lib.unique (hostnames ++ builtins.attrNames configModule);
+    # instances = lib.unique (hostnames ++ builtins.attrNames configModule);
+    instances = hostnames;
 
-    mkHost = hostname: let
-      cfg = configModule.${hostname} or {};
-    in
+    mkHost = hostname:
       if !(builtins.elem hostname hostnames)
       then throw "homelab: host '${hostname}' is not declared (expected hosts/${hostname}/)"
       else
@@ -59,12 +55,24 @@
             self.systemModules.homelab
             ./hosts/${hostname}
             secrets.secretsModule.${hostname}
-            {
+            ({
+              pkgs,
+              lib,
+              ...
+            }: let
+              configModule = lib.recursiveUpdate
+                (import ./config {inherit lib pkgs;}) # low priority host-level defaults
+                secrets.configModule; # higher priority config
+              cfg = configModule.${hostname} or {};
+            in {
               nixpkgs.hostPlatform = lib.mkIf (cfg ? system) cfg.system;
               homelab = cfg;
-            }
+            })
             {
               home-manager.users.worker.imports = [
+                sops-nix.homeManagerModules.sops
+              ];
+              home-manager.users.backup.imports = [
                 sops-nix.homeManagerModules.sops
               ];
             }

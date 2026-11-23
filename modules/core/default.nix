@@ -11,7 +11,7 @@
     builtins.filter (value: value != null) (map f list);
   logDirs = mapNonNull (service:
     if cfg.services.${service}.enable
-    then "d /var/log/${service} 0750 ${cfg.user} ${cfg.user} -"
+    then "d /var/log/${service} 0750 ${cfg.users.worker.name} ${cfg.users.worker.name} -"
     else null)
   services;
 in {
@@ -34,14 +34,14 @@ in {
 
   systemd.tmpfiles.rules = logDirs ++
   [
-    "d /var/lib/traefik/acme 0700 ${cfg.user} ${cfg.user} -"
-    "f /var/lib/traefik/acme/acme.json 0600 ${cfg.user} ${cfg.user} -"
-    "f /var/lib/traefik/acme/acme-staging.json 0600 ${cfg.user} ${cfg.user} -"
-    "d /var/lib/traefik/secrets 0700 ${cfg.user} ${cfg.user} -"
+    "d /var/lib/traefik/acme 0700 ${cfg.users.worker.name} ${cfg.users.worker.name} -"
+    "f /var/lib/traefik/acme/acme.json 0600 ${cfg.users.worker.name} ${cfg.users.worker.name} -"
+    "f /var/lib/traefik/acme/acme-staging.json 0600 ${cfg.users.worker.name} ${cfg.users.worker.name} -"
+    "d /var/lib/traefik/secrets 0700 ${cfg.users.worker.name} ${cfg.users.worker.name} -"
 
-    "d /var/lib/crowdsec 0700 ${cfg.user} ${cfg.user} -"
-    "d /var/lib/crowdsec/config 0700 ${cfg.user} ${cfg.user} -"
-    "d /var/lib/crowdsec/data 0700 ${cfg.user} ${cfg.user} -"
+    "d /var/lib/crowdsec 0700 ${cfg.users.worker.name} ${cfg.users.worker.name} -"
+    "d /var/lib/crowdsec/config 0700 ${cfg.users.worker.name} ${cfg.users.worker.name} -"
+    "d /var/lib/crowdsec/data 0700 ${cfg.users.worker.name} ${cfg.users.worker.name} -"
   ];
 
   # allow access to exposing http/https ports

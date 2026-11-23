@@ -7,7 +7,8 @@ let
       enable = mkEnableOption "Should '${reponame}' repository destination be enabled";
       repository = mkOption {
         type = types.str;
-        description = "Restic repository in restic scheme; example: 'sftp:backup@host:/backups'";
+        description = "Restic repository in restic scheme";
+        example = "sftp:backup@nas:/backups/homelab";
       };
       passwordFile = mkOption {
         type = types.nullOr types.str;
@@ -17,14 +18,20 @@ let
       };
       envFile = mkOption {
         type = types.nullOr types.str;
+        default = null;
         description = ''
           Host-side runtime file containing the restic environment.
         '';
       };
       schedule = mkOption {
-        type = types.str;
+        type = types.nullOr types.str;
         default = "*-*-* 03:00:00";
-        description = "systemd OnCalendar value";
+        description = "systemd OnCalendar value; 'null' means no automated backups";
+      };
+      extraOptions = mkOption {
+        type = types.listOf types.str;
+        default = [];
+        description = "Extra options passed to restic binary";
       };
     };
   });
@@ -32,7 +39,7 @@ in
 {
   repositories = mkOption {
     default = { };
-    type = types.attrOf repo;
+    type = types.attrsOf repo;
   };
 
 }

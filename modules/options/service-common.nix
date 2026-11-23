@@ -2,26 +2,25 @@
   lib,
   name,
   ...
-}:
-let
+}: let
   inherit (lib) mkEnableOption mkOption types;
   service = name;
-in
-{
+in {
   options = {
     enable = mkEnableOption "Enable ${service} service";
 
     image = mkOption {
-      type = types.str;
+      # TODO: separate containerized services and others to avoid setting null
+      type = types.nullOr types.str;
       description = "OCI image without label specified";
     };
     label = mkOption {
-      type = types.str;
+      type = types.nullOr types.str;
       description = "OCI image label. Pin by digest for strict reproducibility.";
     };
 
     ip4 = mkOption {
-      type = types.str;
+      type = types.nullOr types.str;
       description = "OCI image ipv4 address.";
     };
 
@@ -33,11 +32,11 @@ in
 
     volumes = mkOption {
       type = types.listOf types.str;
-      default = [ ];
+      default = [];
       description = "Extra podman volume specs.";
     };
 
-    backup = import ./backup-exporter.nix { inherit lib; };
+    backup.exporter = (import ./backup-exporter.nix {inherit lib;}).exporter service;
 
     verbose = mkEnableOption "Should verbose logging be enabled for the ${service}";
   };
