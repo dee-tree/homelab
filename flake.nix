@@ -72,7 +72,7 @@
               home-manager.users.worker.imports = [
                 sops-nix.homeManagerModules.sops
               ];
-              home-manager.users.backup.imports = [
+              home-manager.users.homelab-backup.imports = [
                 sops-nix.homeManagerModules.sops
               ];
             }

@@ -3,8 +3,8 @@
   users.groups.backup-readers = {
     gid = 890;
     members = [
-      "worker"
-      "backup"
+      "worker" # TODO: homelab-worker
+      "homelab-backup"
     ];
   };
 }

@@ -41,6 +41,7 @@ in {
         "traefik.http.services.radicale.loadbalancer.server.port" = "80";
         "traefik.http.routers.radicale.entrypoints" = "websec-exposed";
         "traefik.http.routers.radicale.tls" = "true";
+        "traefik.http.routers.radicale.tls.certresolver" = "production";
       };
       network = [
         "revproxy.network"

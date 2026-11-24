@@ -8,27 +8,42 @@
   isExporterEnabled = scfg:
     (scfg.enable or false)
     && (scfg.backup.exporter.enable or false)
-    && !(scfg.backup.exporter.disableWithReason or false);
+    && (scfg.backup.exporter.disableWithReason == null);
   exporters = lib.filterAttrs (_: isExporterEnabled) cfg.services;
   repos = lib.filterAttrs (_: rcfg: (rcfg.enable or false)) scfg.repositories;
 in {
+  assertions = [
+    {
+      assertion = (builtins.attrNames exporters) != [] || (scfg.enable or false);
+      message = "At least one service should enable its exporter or 'services.restic' should be disabled";
+    }
+    {
+      assertion = (builtins.attrNames repos) != [] || (scfg.enable or false);
+      message = "At least one target repository should be enabled or 'services.restic' should be disabled";
+    }
+  ];
+  services.restic.enable = scfg.enable;
+  # TODO: implement secondary dump-copy backups
   services.restic.backups =
     lib.mapAttrs (repo: rcfg: {
-      raepository = rcfg.repository;
+      repository = rcfg.repository;
       initialize = true; # create repo if it does not exist
       passwordFile = rcfg.passwordFile;
-      environmentFile = rcfg.environmentFile;
-      paths = map (service: "/var/lib/backup-export/${service}/current") exporters;
-      backupPrepareCommand = lib.concatMapStringsSep "\n" (exporter: "/run/current-system/sw/bin/systemctl start backup-export-${exporter}.service"); # TODO: why that path?
-      extraBackupArguments =
+      environmentFile = rcfg.envFile;
+      paths = map (service: "/var/lib/backup-export/${service}/current") (builtins.attrNames exporters);
+      backupPrepareCommand = lib.concatMapStringsSep "\n" (exporter: "/usr/bin/sudo -n ${pkgs.systemd}/bin/systemctl start backup-export-${exporter}.service") (builtins.attrNames exporters);
+      extraBackupArgs =
         [
-          ("--host" cfg.hostname)
-          ("--retry-lock" "5m")
-          ("--tag" "homelab")
+          "--host" cfg.hostname
+          "--retry-lock" "5m"
+          "--tag" "homelab"
         ]
         ++ lib.concatMap
         (service: ["--tag" "service:${service}"])
-        exporters;
+        (builtins.attrNames exporters);
+
+      extraOptions = rcfg.extraOptions;
+
       pruneOpts = [
         "--keep-hourly 6"
         "--keep-daily 7"
@@ -37,11 +52,14 @@ in {
         "--keep-yearly 5"
       ];
 
-      timerConfig = {
-        OnCalendar = rcfg.schedule;
-        Persistent = true;
-        RandomizedDelaySec = "10m";
-      };
+      timerConfig =
+        if rcfg.schedule == null
+        then null
+        else {
+          OnCalendar = rcfg.schedule;
+          Persistent = true;
+          RandomizedDelaySec = "10m";
+        };
     })
     repos;
 }

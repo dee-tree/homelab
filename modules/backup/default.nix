@@ -11,7 +11,8 @@
     exportCommand =
       if b.exportCommand == null
       then ''
-        for src in ${lib.escapeShellArgs (map toString b.sources)}; do
+        sources=( ${lib.escapeShellArgs (map toString b.sources)} )
+        for src in "''${sources[@]}"; do
           cp -a --reflink=auto --parents -- "$src" "$EXPORT_DIR/"
         done
       ''
@@ -31,7 +32,7 @@
         rm -rf "$work"; mkdir -p "$work"
         export EXPORT_DIR="$work"
         ${exportCommand}
-        chown -R root:backup_readers "$EXPORT_DIR"
+        chown -R root:backup-readers "$EXPORT_DIR"
         chmod -R u=rwX,g=rX,o= "$EXPORT_DIR"
         rm -rf "$STATE_DIRECTORY/current"
         mv "$work" "$STATE_DIRECTORY/current"
@@ -40,28 +41,34 @@
 in {
   assertions =
     (lib.mapAttrsToList (service: scfg: {
-      assertion =
-        (scfg.backup.exporter.enable or false) || (scfg.backup.exporter.disableWithReason or null) != null;
+      assertion = (scfg.backup.exporter.enable or false) || (scfg.backup.exporter.disableWithReason or null) != null;
       message = "${service} service has neither `backup.exporter.enable` nor `backup.exporter.disableWithReason` specified";
     }) (lib.filterAttrs (_: scfg: (scfg.enable or false)) cfg.services)) # TODO: add persistentPaths to filter
     ++ (lib.mapAttrsToList (service: scfg: {
         assertion = scfg.backup.exporter.exportCommand != null || scfg.backup.exporter.sources != [];
         message = "${service} service should set either `backup.exporter.exportCommand` or `backup.exporter.sourcePaths`";
       })
-      enabledExporters);
-
-  # # Bridge for passing hostConfig into home-manager module
-  # _module.args.hostConfig = config.homelab;
+      enabledExporters)
+    ++ [
+      {
+        assertion = (cfg.services.restic.enable or false) || (cfg.services.restic.disableWithReason or null) != null;
+        message = "restic has neither `restic.enable` nor `restic.disableWithReason` specified";
+      }
+    ];
 
   imports = [./backup-reader-group.nix ./worker.nix];
 
-  environment.etc."sudoers.d/backup-export" = {
-    mode = "0440";
-    # TODO: replace '*' with explicit exorters list
-    text = ''
-      backup ALL=(root) NOPASSWD: /usr/bin/systemctl start backup-export-*.service
-    '';
-  };
+  security.sudo.enable = true;
+  security.sudo.extraRules = [
+    {
+      users = ["homelab-backup"];
+      runAs = "root";
+      commands = map (name: {
+        command = "${pkgs.systemd}/bin/systemctl start backup-export-${name}.service";
+        options = ["NOPASSWD"];
+      }) (builtins.attrNames enabledExporters);
+    }
+  ];
 
   systemd.services =
     lib.mapAttrs' (
@@ -84,6 +91,6 @@ in {
     enabledExporters;
 
   systemd.tmpfiles.rules = [
-    "d /tmp/homelab/restic/dummy 0700 backup backup - -"
+    "d /tmp/homelab/restic/dummy 0700 homelab-backup homelab-backup - -"
   ];
 }

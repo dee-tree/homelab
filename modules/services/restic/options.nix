@@ -10,6 +10,7 @@ let
         description = "Restic repository in restic scheme";
         example = "sftp:backup@nas:/backups/homelab";
       };
+      isPrimary = mkEnableOption "If '${reponame}' repository is primary; primary repository should be unique";
       passwordFile = mkOption {
         type = types.nullOr types.str;
         description = ''
@@ -37,6 +38,12 @@ let
   });
 in
 {
+  # `disableWithReason` serves as hardening for important things with reasonable cost.
+  disableWithReason = mkOption {
+    type = types.nullOr types.str;
+    default = null;
+    description = "Reason why restic should be disabled on this node";
+  };
   repositories = mkOption {
     default = { };
     type = types.attrsOf repo;

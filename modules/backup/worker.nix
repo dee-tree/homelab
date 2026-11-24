@@ -23,9 +23,9 @@
 
   user = mkServiceUser {
     inherit (cfg) enable;
-    user = cfg.users.backup.name;
-    uid = cfg.users.backup.id;
-    subIdStart = cfg.users.backup.subIdStart;
+    user = cfg.users.homelab-backup.name;
+    uid = cfg.users.homelab-backup.id;
+    subIdStart = cfg.users.homelab-backup.subIdStart;
     inherit homeModule;
   };
 in {

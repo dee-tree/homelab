@@ -7,7 +7,7 @@
   cfg = config.homelab;
   mkServiceUser = import ./mk-service-user.nix;
   services = builtins.attrNames (
-    # NOTE: restic is managed by `backup` user.
+    # NOTE: restic is managed by `homelab-backup` user.
     # TODO: consider to make obvious mapping between service-to-user correspondence.
     lib.filterAttrs (name: type: type == "directory" && name != "restic") (builtins.readDir ../services)
   );
