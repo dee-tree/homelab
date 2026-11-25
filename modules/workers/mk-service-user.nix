@@ -41,9 +41,6 @@
         count = 65536;
       }
     ];
-    
-    # Bridge for passing hostConfig into home-manager module
-    _module.args.hostConfig = config.homelab;
   };
 
   security.wrappers = {
@@ -64,6 +61,9 @@
   home-manager.users.${user} = {
     imports = [homeModule];
 
+    # Bridge for passing hostConfig into home-manager module
+    _module.args.hostConfig = config.homelab;
+    
     # Keep this unchanged after initial deployment.
     home.stateVersion = "26.05";
   };
