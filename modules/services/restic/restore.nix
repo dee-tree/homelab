@@ -26,7 +26,7 @@ let
           exportPath=${q "/${scfg.backup.exporter.exportRelativePath}/current"}
           snapshotHost=${q cfg.hostname}
           snapshotTag=${q "service:${name}"}
-          destination=${q "${cfg.backup.restore.stagingRoot}/${name}"}
+          destination=${q "${cfg.services.restic.restore.stagingRoot}/${name}"}
           sourcesJson=${q (
             builtins.toJSON (map toString scfg.backup.exporter.sources)
           )}
@@ -80,7 +80,7 @@ let
       exit 2
     fi
 
-    ${pkgs.coreutils}/bin/mkdir -p -- ${q cfg.backup.restore.stagingRoot}
+    ${pkgs.coreutils}/bin/mkdir -p -- ${q scfg.restore.stagingRoot}
 
     # Serialize staging operations for this service.
     exec 9>"$destination.stage.lock"

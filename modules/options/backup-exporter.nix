@@ -34,7 +34,7 @@ in {
     exportRelativePath = mkOption {
       type = types.str;
       default = "services/${service}";
-      description = "Path relative to config.homelab.backup.exportRoot to be backed up in staging";
+      description = "Path relative to config.homelab.services.restic.exportRoot to be backed up in staging";
     };
     runtimeInputs = mkOption {
       type = types.listOf types.package;

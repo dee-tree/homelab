@@ -1,4 +1,4 @@
-{ lib }:
+{ config, lib }:
 let
   inherit (lib) mkOption types mkEnableOption;
 
@@ -47,6 +47,24 @@ in
   repositories = mkOption {
     default = { };
     type = types.attrsOf repo;
+  };
+  
+  exportRoot = mkOption {
+      type = types.path;
+      default = "/var/lib/backup-export";
+      description = "Directory for staging backups";
+  };
+  restore = {
+    stagingRoot = mkOption {
+        type = types.path;
+        default = "${config.users.users.homelab-backup.home}/.local/state/backup-restore";
+        description = "Directory for staging backups during restoration process";
+    };
+    rollbackRoot = mkOption {
+      type = types.path;
+      default = "/var/lib/backup-restore-rollback";
+      description = "Storage for data preserved before backup restoration apply";
+    };
   };
 
 }

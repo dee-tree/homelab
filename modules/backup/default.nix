@@ -8,7 +8,7 @@
   enabledExporters = lib.filterAttrs (_: scfg: (scfg.backup.exporter.enable or false)) cfg.services;
 
   mkExport = service: b: let
-  stagingDir = "${cfg.backup.exportRoot}/${b.exportRelativePath}";
+  stagingDir = "${cfg.services.restic.exportRoot}/${b.exportRelativePath}";
     exportCommand =
       if b.exportCommand == null
       then ''

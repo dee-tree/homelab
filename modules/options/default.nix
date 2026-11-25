@@ -69,22 +69,7 @@ in {
     verbose = mkEnableOption "Should verbose logging be enabled for the whole host";
 
     services = lib.genAttrs services (
-      service: mkServiceOpts {options = import ../services/${service}/options.nix {inherit lib;};}
+      service: mkServiceOpts {options = import ../services/${service}/options.nix {inherit config lib;};}
     );
-
-    backup = {
-      exportRoot = mkOption {
-          type = types.path;
-          default = "/var/lib/backup-export";
-          description = "Directory for staging backups";
-      };
-      restore = {
-        stagingRoot = mkOption {
-            type = types.path;
-            default = "${config.users.users.homelab-backup.home}/.local/state/backup-restore";
-            description = "Directory for staging backups during restoration process";
-        };
-      };
-    };
   };
 }

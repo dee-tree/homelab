@@ -66,7 +66,7 @@ in {
 
     systemd.user.services = lib.mapAttrs'
       (repo: _: lib.nameValuePair "restic-backups-${repo}" {
-        Service.WorkingDirectory = cfg.backup.exportRoot;
+        Service.WorkingDirectory = scfg.exportRoot;
       })
       repos;
 }

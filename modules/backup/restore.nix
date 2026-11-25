@@ -11,19 +11,23 @@ let
 
   mkRestore = name: scfg:
     let
-      stage = "${cfg.backup.restore.stagingRoot}/${name}";
+      stage = "${cfg.services.restic.restore.stagingRoot}/${name}";
       b = scfg.backup.exporter;
 
       preCommand = scfg.backup.exporter.preCommand or "";
       postCommand = scfg.backup.exporter.postCommand or "";
 
+      hookPath = lib.makeBinPath (with pkgs; [ coreutils systemd ]);
+
       pre = pkgs.writeShellScript "backup-restore-${name}-pre" ''
         set -euo pipefail
+        export PATH=${hookPath}:/usr/bin:/bin
         ${preCommand}
       '';
 
       post = pkgs.writeShellScript "backup-restore-${name}-post" ''
         set -euo pipefail
+        export PATH=${hookPath}:/usr/bin:/bin
         ${postCommand}
       '';
 
@@ -64,6 +68,10 @@ let
         sources=( ${lib.escapeShellArgs (map toString b.sources)} )
         stage=${q stage}
 
+        rollbackRoot=${q cfg.services.restic.restore.rollbackRoot}
+        install -d -o root -g root -m 0700 -- "$rollbackRoot"
+        install -d -o root -g root -m 0700 -- "$rollbackRoot/${q name}"
+
         # All privileged exporter/restore operations use this lock.
         mkdir -p /run/homelab-backup-locks
         chmod 0700 /run/homelab-backup-locks
@@ -72,7 +80,7 @@ let
         flock -x 8
 
         # Serialize with Home Manager's staging operation.
-        exec 9<>${q "${cfg.backup.restore.stagingRoot}/${name}.lock"}
+        exec 9<>${q "${cfg.services.restic.restore.stagingRoot}/${name}.lock"}
         flock -x 9
 
         [[ -d "$stage" && ! -L "$stage" ]] ||
@@ -158,7 +166,7 @@ let
             candidate=$(mktemp -d "$live.restore.XXXXXXXX")
             candidates+=("$candidate")
 
-            rollback="$live.rollback.$stamp"
+            rollback="$rollbackRoot/$(basename -- "$live").rollback.$stamp"
             test ! -e "$rollback"
             test ! -L "$rollback"
             rollbacks+=("$rollback")
@@ -214,7 +222,7 @@ let
         ${post}
         successful=true
 
-        printf 'Recovery installed for %s\n' "${name}"
+        printf 'Backup successfully restored for %s\n' "${name}"
         printf 'Previous data retained at %s\n' "$rollback"
         printf 'Staging recovery retained at %s\n' "$stage"
       '';
@@ -222,6 +230,10 @@ let
     lib.nameValuePair "backup-restore-${name}" {
       description = "Apply staged restore for ${name}";
 
+      # Do not run restoration just because system-manager re-applies the service
+      restartIfChanged = false;
+      reloadIfChanged = false;
+      
       serviceConfig = {
         Type = "oneshot";
         User = "root";
@@ -230,6 +242,7 @@ let
         # Large restores can take longer than the normal start timeout.
         TimeoutStartSec = "infinity";
         UMask = "0077";
+        RemainAfterExit = false;
         # No timer, only manual execution
       };
     };
