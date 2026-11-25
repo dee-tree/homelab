@@ -1,4 +1,4 @@
-{ lib, cfg }:
+{ lib,...}:
 ''
 filenames:
   - /var/log/traefik/*.log

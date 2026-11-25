@@ -7,13 +7,8 @@
   cfg = config.homelab;
   mkServiceUser = import ../workers/mk-service-user.nix;
 
-  homeModule = {config, ...}: let
-    importService = service: (import ../services/${service} {
-      inherit cfg config;
-    });
-  in {
-
-    imports = map importService [ "restic" ];
+  homeModule = {config, ...}: {
+    imports = map (service: ../services/${service}) [ "restic" ];
 
     home.packages = with pkgs; [
       restic

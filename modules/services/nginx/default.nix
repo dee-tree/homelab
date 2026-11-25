@@ -1,16 +1,17 @@
 # home-manager service
 {
-  cfg,
-  ...
-}: {
+  hostConfig,
   lib,
   pkgs,
   ...
 }:
 # arguments are supplied by home-manager
 let
-  scfg = cfg.services.nginx;
-  nginxConf = pkgs.writeText "nginx.conf" (import ./config/nginx.conf.nix {inherit lib cfg;});
+  scfg = hostConfig.services.nginx;
+  nginxConf = pkgs.writeText "nginx.conf" (import ./config/nginx.conf.nix {
+    inherit lib;
+    cfg = hostConfig;
+  });
 in {
   services.podman = {
     enable = true;

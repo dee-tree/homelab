@@ -1,13 +1,14 @@
 # home-manager service
-{cfg, ...}: {
+{
+  hostConfig,
   lib,
   pkgs,
   ...
 }:
 # arguments are supplied by home-manager
 let
-scfg = cfg.services.crowdsec;
-  acquisition = pkgs.writeText "acquis.yaml" (import ./config/acquis.yaml.nix { inherit lib cfg; });
+scfg = hostConfig.services.crowdsec;
+  acquisition = pkgs.writeText "acquis.yaml" (import ./config/acquis.yaml.nix { inherit lib; });
 in {
   services.podman = {
     enable = true;

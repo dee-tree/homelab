@@ -1,19 +1,18 @@
 # home-manager service
 {
   config,
-  cfg,
-  ...
-}: {
+  hostConfig,
   lib,
   pkgs,
   ...
 }:
 # arguments are supplied by home-manager
 let
-  scfg = cfg.services.radicale;
+  scfg = hostConfig.services.radicale;
   dataDir = "${config.home.homeDirectory}/data/radicale";
   radicaleConfig = pkgs.writeText "radicale-config" (import ./config/config.nix {
-    inherit lib cfg;
+    inherit lib;
+    cfg = hostConfig;
   });
 in {
   home.activation.radicaleData = lib.hm.dag.entryAfter ["writeBoundary"] ''
@@ -35,7 +34,7 @@ in {
       ];
       labels = {
         "traefik.enable" = "true";
-        "traefik.http.routers.radicale.rule" = "Host(`${scfg.subdomain}.${cfg.domain}`)";
+        "traefik.http.routers.radicale.rule" = "Host(`${scfg.subdomain}.${hostConfig.domain}`)";
         "traefik.docker.network" = "revproxy";
         "traefik.http.routers.radicale.service" = "radicale";
         "traefik.http.services.radicale.loadbalancer.server.port" = "80";

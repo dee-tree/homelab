@@ -12,12 +12,8 @@
     lib.filterAttrs (name: type: type == "directory" && name != "restic") (builtins.readDir ../services)
   );
 
-  homeModule = {config, ...}: let
-    importService = service: (import ../services/${service} {
-      inherit cfg config;
-    });
-  in {
-    imports = map importService services;
+  homeModule = {config, ...}: {
+    imports = map (service: ../services/${service}) services;
     sops.age.keyFile = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
 
     xdg.configFile."containers/containers.conf.d/10-timezone.conf".text = ''

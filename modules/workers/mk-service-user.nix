@@ -13,9 +13,6 @@
 }:
 # arguments are supplied by system-manager
 {
-  # environment.etc."homelab-deploy-marker".text =
-  # "remote-test-2026-11-13-A\n";
-
   users.groups.${user} = {
     inherit gid;
   };
@@ -44,6 +41,9 @@
         count = 65536;
       }
     ];
+    
+    # Bridge for passing hostConfig into home-manager module
+    _module.args.hostConfig = config.homelab;
   };
 
   security.wrappers = {

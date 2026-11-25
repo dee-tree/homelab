@@ -1,13 +1,17 @@
 # home-manager service
-{cfg, config, ...}: {
+{
+  hostConfig,
   lib,
   pkgs,
   ...
 }:
 # arguments are supplied by home-manager
 let
-  scfg = cfg.services.traefik;
-  crowdsecConf = pkgs.writeText "crowdsec.yaml" (import ./config/dynamic.crowdsec.yaml.nix {inherit lib cfg;});
+  scfg = hostConfig.services.traefik;
+  crowdsecConf = pkgs.writeText "crowdsec.yaml" (import ./config/dynamic.crowdsec.yaml.nix {
+    inherit lib;
+    cfg = hostConfig;
+  });
   dynamicConfigDir = "/etc/traefik/dynamic/conf";
   certsDir = "/etc/traefik/certs";
 in {
@@ -19,7 +23,7 @@ in {
 
       volumes = [
         "${crowdsecConf}:/${dynamicConfigDir}/crowdsec.yaml" # Routing/dynamic configuration
-        "${cfg.services.crowdsec.traefikBouncer.apiKeyFile}:/run/traefik/secrets/crowdsec-bouncer-key:ro" # crowdsec LAPI key
+        "${hostConfig.services.crowdsec.traefikBouncer.apiKeyFile}:/run/traefik/secrets/crowdsec-bouncer-key:ro" # crowdsec LAPI key
         "%t/podman/podman.sock:/var/run/docker.sock"
         "/var/lib/traefik/acme/acme.json:${certsDir}/acme.json" # SSL certificates
         "/var/lib/traefik/acme/acme-staging.json:${certsDir}/acme-staging.json" # SSL certificates
@@ -31,7 +35,7 @@ in {
       ];
       labels = {
         "traefik.enable" = "true";
-        "traefik.http.routers.dashboard.rule" = "Host(`${scfg.subdomain}.${cfg.domain}`)";
+        "traefik.http.routers.dashboard.rule" = "Host(`${scfg.subdomain}.${hostConfig.domain}`)";
         "traefik.http.routers.dashboard.service" = "api@internal";
         "traefik.http.routers.dashboard.entrypoints" = "websec";
         # "traefik.http.routers.dashboard.tls.certresolver" = "production"

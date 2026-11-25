@@ -1,15 +1,17 @@
 # home-manager service
-{config, cfg, ...}: {
+{
+  config,
+  hostConfig,
   lib,
   pkgs,
   ...
 }: let
-  scfg = cfg.services.restic;
+  scfg = hostConfig.services.restic;
   isExporterEnabled = scfg:
     (scfg.enable or false)
     && (scfg.backup.exporter.enable or false)
     && (scfg.backup.exporter.disableWithReason == null);
-  exporters = lib.filterAttrs (_: isExporterEnabled) cfg.services;
+  exporters = lib.filterAttrs (_: isExporterEnabled) hostConfig.services;
   repos = lib.filterAttrs (_: rcfg: (rcfg.enable or false)) scfg.repositories;
 in {
   assertions = [
@@ -22,7 +24,10 @@ in {
       message = "At least one target repository should be enabled or 'services.restic' should be disabled";
     }
   ];
-  imports = [ (import ./restore.nix { inherit config cfg; }) ];
+  imports = [ (import ./restore.nix {
+    inherit config;
+    cfg = hostConfig;
+  }) ];
   services.restic.enable = scfg.enable;
   # TODO: implement secondary dump-copy backups
   services.restic.backups =
@@ -35,7 +40,7 @@ in {
       backupPrepareCommand = lib.concatMapStringsSep "\n" (exporter: "/usr/bin/sudo -n ${pkgs.systemd}/bin/systemctl start backup-export-${exporter}.service") (builtins.attrNames exporters);
       extraBackupArgs =
         [
-          "--host" cfg.hostname
+          "--host" hostConfig.hostname
           "--retry-lock" "5m"
           "--tag" "homelab"
         ]

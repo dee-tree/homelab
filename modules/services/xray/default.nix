@@ -1,18 +1,17 @@
 # home-manager service
 {
   config,
-  cfg,
-  ...
-}: {
+  hostConfig,
   lib,
   pkgs,
   ...
 }:
 # arguments are supplied by home-manager
 let
-  scfg = cfg.services.xray;
+  scfg = hostConfig.services.xray;
   xrayConfig = import ./config/config.nix {
-    inherit lib cfg;
+    inherit lib;
+    cfg = hostConfig;
     privateKey = config.sops.placeholder."xray/vless/private_key";
   };
 in {
