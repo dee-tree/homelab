@@ -31,6 +31,11 @@ in {
       default = null;
       description = "Command called for exporting backup. `null` has semantics of default archive dump behavior. For custom command, place backup to `$EXPORT_PATH`";
     };
+    exportRelativePath = mkOption {
+      type = types.str;
+      default = "services/${service}";
+      description = "Path relative to config.homelab.backup.exportRoot to be backed up in staging";
+    };
     runtimeInputs = mkOption {
       type = types.listOf types.package;
       default = [];

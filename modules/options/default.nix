@@ -1,6 +1,6 @@
 # Schema for homelab config.
 # The single option tree shared by the system and Home Manager layers.
-{lib, ...}: let
+{config, lib, ...}: let
   inherit (lib) mkOption mkEnableOption types;
 
   # Restrict to characters that are safe inside nginx config and shell args.
@@ -71,5 +71,20 @@ in {
     services = lib.genAttrs services (
       service: mkServiceOpts {options = import ../services/${service}/options.nix {inherit lib;};}
     );
+
+    backup = {
+      exportRoot = mkOption {
+          type = types.path;
+          default = "/var/lib/backup-export";
+          description = "Directory for staging backups";
+      };
+      restore = {
+        stagingRoot = mkOption {
+            type = types.path;
+            default = "${config.users.users.homelab-backup.home}/.local/state/backup-restore";
+            description = "Directory for staging backups during restoration process";
+        };
+      };
+    };
   };
 }

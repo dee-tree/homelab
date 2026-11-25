@@ -26,7 +26,7 @@
     extraGroups = [ "adm" ]; # for syslogs access
     isSystemUser = true;
 
-    home = "/var/lib/${user}";
+    home = lib.mkDefault "/var/lib/${user}";
     createHome = true;
     linger = enable;
 

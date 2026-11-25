@@ -8,12 +8,13 @@
   enabledExporters = lib.filterAttrs (_: scfg: (scfg.backup.exporter.enable or false)) cfg.services;
 
   mkExport = service: b: let
+  stagingDir = "${cfg.backup.exportRoot}/${b.exportRelativePath}";
     exportCommand =
       if b.exportCommand == null
       then ''
         sources=( ${lib.escapeShellArgs (map toString b.sources)} )
         for src in "''${sources[@]}"; do
-          cp -a --reflink=auto --parents -- "$src" "$EXPORT_DIR/"
+          cp -a --reflink=auto -- "$src" "$EXPORT_DIR/"
         done
       ''
       else b.exportCommand;
@@ -28,14 +29,16 @@
         ]
         ++ b.runtimeInputs;
       text = ''
-        work="$STATE_DIRECTORY/.new"
+        exportRoot=${lib.escapeShellArg stagingDir}
+        mkdir -p -- "$exportRoot"
+        work="$exportRoot/.new"
         rm -rf "$work"; mkdir -p "$work"
         export EXPORT_DIR="$work"
         ${exportCommand}
         chown -R root:backup-readers "$EXPORT_DIR"
         chmod -R u=rwX,g=rX,o= "$EXPORT_DIR"
-        rm -rf "$STATE_DIRECTORY/current"
-        mv "$work" "$STATE_DIRECTORY/current"
+        rm -rf "$exportRoot/current"
+        mv "$work" "$exportRoot/current"
       '';
     };
 in {
@@ -56,7 +59,7 @@ in {
       }
     ];
 
-  imports = [./backup-reader-group.nix ./worker.nix];
+  imports = [./backup-reader-group.nix ./restore.nix ./worker.nix];
 
   security.sudo.enable = true;
   security.sudo.extraRules = [
@@ -80,8 +83,8 @@ in {
             Type = "oneshot";
             Group = "backup-readers";
             UMask = "0027";
-            StateDirectory = "backup-export/${service}"; # resolved into /var/lib/backup-export for system service
-            StateDirectoryMode = "0750";
+            # StateDirectory = "backup-export/${service}"; # resolved into /var/lib/backup-export for system service
+            # StateDirectoryMode = "0750";
             ExecStartPre = lib.optional (b.preCommand != null) b.preCommand;
             ExecStart = "${mkExport service b}/bin/export-${service}";
             ExecStopPost = lib.optional (b.postCommand != null) b.postCommand;

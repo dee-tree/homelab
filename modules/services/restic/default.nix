@@ -1,5 +1,5 @@
 # home-manager service
-{cfg, ...}: {
+{config, cfg, ...}: {
   lib,
   pkgs,
   ...
@@ -22,6 +22,7 @@ in {
       message = "At least one target repository should be enabled or 'services.restic' should be disabled";
     }
   ];
+  imports = [ (import ./restore.nix { inherit config cfg; }) ];
   services.restic.enable = scfg.enable;
   # TODO: implement secondary dump-copy backups
   services.restic.backups =
@@ -30,7 +31,7 @@ in {
       initialize = true; # create repo if it does not exist
       passwordFile = rcfg.passwordFile;
       environmentFile = rcfg.envFile;
-      paths = map (service: "/var/lib/backup-export/${service}/current") (builtins.attrNames exporters);
+      paths = lib.mapAttrsToList (_: scfg: "${scfg.backup.exporter.exportRelativePath}/current") exporters;
       backupPrepareCommand = lib.concatMapStringsSep "\n" (exporter: "/usr/bin/sudo -n ${pkgs.systemd}/bin/systemctl start backup-export-${exporter}.service") (builtins.attrNames exporters);
       extraBackupArgs =
         [
@@ -62,4 +63,10 @@ in {
         };
     })
     repos;
+
+    systemd.user.services = lib.mapAttrs'
+      (repo: _: lib.nameValuePair "restic-backups-${repo}" {
+        Service.WorkingDirectory = cfg.backup.exportRoot;
+      })
+      repos;
 }
