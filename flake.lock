@@ -160,10 +160,13 @@
         ]
       },
       "locked": {
-        "lastModified": 1795538709,
-        "narHash": "sha256-lAHRBZs8iC9qJb0hDHyqDDLOZn9WHH0PzAxzV/FDe1Q=",
-        "path": "/home/dee/projects/homelab.secrets",
-        "type": "path"
+        "lastModified": 1795615018,
+        "narHash": "sha256-nVSyaZdNUi+T6HR2uzLJj/gBW6cbGd+1h/SYlO4l6D4=",
+        "ref": "refs/heads/main",
+        "rev": "722490711342018405fae572b2c96d08d24305dc",
+        "revCount": 7,
+        "type": "git",
+        "url": "ssh://git@github.com/dee-tree/homelab.secrets.git"
       },
       "original": {
         "type": "git",

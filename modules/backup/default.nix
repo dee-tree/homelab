@@ -59,12 +59,12 @@ in {
       }
     ];
 
-  imports = [./backup-reader-group.nix ./restore.nix ./worker.nix];
+  imports = [./restore.nix];
 
   security.sudo.enable = true;
   security.sudo.extraRules = [
     {
-      users = ["homelab-backup"];
+      users = [cfg.users.backup.name];
       runAs = "root";
       commands = map (name: {
         command = "${pkgs.systemd}/bin/systemctl start backup-export-${name}.service";
@@ -92,6 +92,6 @@ in {
     enabledExporters;
 
   systemd.tmpfiles.rules = [
-    "d /tmp/homelab/restic/dummy 0700 homelab-backup homelab-backup - -"
+    "d /tmp/homelab/restic/dummy 0700 ${cfg.users.backup.name} ${cfg.users.backup.name} - -"
   ];
 }

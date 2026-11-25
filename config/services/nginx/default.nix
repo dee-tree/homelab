@@ -1,4 +1,5 @@
 {...}: {
+  runtimeUser = "worker";
   image = "docker.io/library/nginx";
   # image = "public.ecr.aws/docker/library/nginx";
   label = import ./version.nix;

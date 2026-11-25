@@ -1,38 +1,39 @@
 # home-manager module
-{ config, cfg, ... }:
-{ lib, pkgs, ... }:
-
-let
-  scfg = cfg.services.restic;
+{
+  hostConfig,
+  lib,
+  pkgs,
+  ...
+}: let
   q = lib.escapeShellArg;
-
+  scfg = hostConfig.services.restic;
   repositoryCases = lib.concatStringsSep "\n" (
     lib.mapAttrsToList
-      (name: repo: ''
-        ${q name})
-          resticArgs=(
-            --repo ${q repo.repository}
-            --password-file ${q repo.passwordFile}
-          )
-          ;;
-      '')
-      scfg.repositories
+    (name: repo: ''
+      ${q name})
+        resticArgs=(
+          --repo ${q repo.repository}
+          --password-file ${q repo.passwordFile}
+        )
+        ;;
+    '')
+    scfg.repositories
   );
 
   serviceCases = lib.concatStringsSep "\n" (
     lib.mapAttrsToList
-      (name: scfg: ''
-        ${q name})
-          exportPath=${q "/${scfg.backup.exporter.exportRelativePath}/current"}
-          snapshotHost=${q cfg.hostname}
-          snapshotTag=${q "service:${name}"}
-          destination=${q "${cfg.services.restic.restore.stagingRoot}/${name}"}
-          sourcesJson=${q (
-            builtins.toJSON (map toString scfg.backup.exporter.sources)
-          )}
-          ;;
-      '')
-      cfg.services
+    (name: scfg: ''
+      ${q name})
+        exportPath=${q "/${scfg.backup.exporter.exportRelativePath}/current"}
+        snapshotHost=${q hostConfig.hostname}
+        snapshotTag=${q "service:${name}"}
+        destination=${q "${hostConfig.services.restic.restore.stagingRoot}/${name}"}
+        sourcesJson=${q (
+        builtins.toJSON (map toString scfg.backup.exporter.sources)
+      )}
+        ;;
+    '')
+    hostConfig.services
   );
 
   restore = pkgs.writeShellScript "backup-restore" ''
@@ -50,8 +51,8 @@ let
       exit 2
     fi
 
-    if [[ $(${pkgs.coreutils}/bin/id -un) != ${q cfg.users.homelab-backup.name} ]]; then
-      echo "Run this command as ${cfg.users.homelab-backup.name}." >&2
+    if [[ $(${pkgs.coreutils}/bin/id -un) != ${q hostConfig.users.backup.name} ]]; then
+      echo "Run this command as ${hostConfig.users.backup.name}." >&2
       exit 1
     fi
 
@@ -148,10 +149,9 @@ let
     printf 'Snapshot: %s\n' "$snapshotId"
     printf 'Live data has not been changed.\n'
   '';
-in
-{
+in {
   home.packages = [
-    (pkgs.runCommand "backup-restore-command" { } ''
+    (pkgs.runCommand "backup-restore-command" {} ''
       mkdir -p "$out/bin"
       ln -s ${restore} "$out/bin/backup-restore"
     '')

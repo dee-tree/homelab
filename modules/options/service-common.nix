@@ -9,6 +9,11 @@ in {
   options = {
     enable = mkEnableOption "Enable ${service} service";
 
+    runtimeUser = lib.mkOption {
+      type = lib.types.str;
+      description = "System user that is running ${service} service; should be defined in `homelab.users`";
+    };
+
     image = mkOption {
       # TODO: separate containerized services and others to avoid setting null
       type = types.nullOr types.str;

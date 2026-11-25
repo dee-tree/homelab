@@ -1,4 +1,5 @@
 {pkgs, ...}: {
+  runtimeUser = "backup";
   backup.exporter.disableWithReason = "Backup tool itself";
 
   repositories.dummy = {

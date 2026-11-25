@@ -58,7 +58,7 @@ in {
 
     users = lib.mergeAttrsList [
       (user "worker" 800 0 "System user capable running services")
-      (user "homelab-backup" 891 1 "System user capable backing services persistend data up")
+      (user "backup" 891 1 "System user capable backing services persistend data up")
     ];
 
     domain = mkOption {

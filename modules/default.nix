@@ -4,5 +4,6 @@
     ./core
     ./backup
     ./workers
+    ./services
   ];
 }

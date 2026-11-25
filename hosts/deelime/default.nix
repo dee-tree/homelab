@@ -13,5 +13,8 @@ in
     services.crowdsec.enable = true;
     services.radicale.enable = true; # TODO: remove radicale from deelime
     services.restic.enable = true;
+
+    users.worker.name = "worker";
+    users.backup.name = "homelab-backup";
   };
 }

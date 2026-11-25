@@ -1,5 +1,5 @@
 {
-  enable,
+  enable ? true,
   user,
   uid,
   gid ? uid,
@@ -20,7 +20,6 @@
   users.users.${user} = {
     inherit uid enable;
     group = user;
-    extraGroups = [ "adm" ]; # for syslogs access
     isSystemUser = true;
 
     home = lib.mkDefault "/var/lib/${user}";
@@ -63,7 +62,7 @@
 
     # Bridge for passing hostConfig into home-manager module
     _module.args.hostConfig = config.homelab;
-    
+
     # Keep this unchanged after initial deployment.
     home.stateVersion = "26.05";
   };

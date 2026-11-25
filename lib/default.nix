@@ -7,6 +7,10 @@
     inherit lib;
   };
 
+  #
+  # Public services that are exported in the flake
+  #
+
   mkXrayClientUri = {
     cfg,
     host,

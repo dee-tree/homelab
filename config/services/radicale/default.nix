@@ -1,10 +1,12 @@
 {pkgs, ...}: {
+  runtimeUser = "worker";
   image = "ghcr.io/kozea/radicale";
   label = import ./version.nix;
   ip4 = "10.90.0.20";
 
   backup.exporter.enable = true;
   backup.exporter.sources = [
+    # TODO: Do not repeat directory value here and in service
     "/var/lib/worker/data/radicale"
   ];
   backup.exporter.preCommand = "${pkgs.systemd}/bin/systemctl --user --machine=worker@.host stop podman-radicale.service";
