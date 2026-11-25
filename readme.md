@@ -20,6 +20,46 @@ TBD...
 
 See `taskfile.yml`
 
+## Backups
+
+Backups are set declarative too including restoration.
+Currently, restic is used for backing-up with declarative repositories.
+
+### How does it work?
+
+At the host, a specialuser manages backups and owns `restic`.
+
+1. Publicly facing restic user systemd service (`restic-backups-<restic-repo-name>.service`, owned by restic) starts backup process (by timer / manually triggered) of all back-up-able services at once.
+2. At `backupPrepareCommand` of restic service, export of services persistent data is triggered via `backup-export-<service-name>.service` service run.
+3. Each back-up-able service exposes its own user systemd service `backup-export-<servie-name>.service` that dumps its data to the export staging directory (`restic.exportRoot/<service>.backup.exporter.relativePath`). To preserve data consistency, each service could declare its stop/start commands via `<service>.backup.exporter.preCommand/postCommand`
+4. `restic-backups-<restic-repo-name>.service` runs restic on export staging directory.
+
+To check exporting to staging logs: `sudo journalctl -e -u backup-export-<service>.service`
+To check restic backup process logs itself: `sudo journalctl -t restic -e`
+
+### Trigger backup
+
+To trigger backup, start:
+```sh
+sudo systemctl --user --machine=homelab-backup@.host start restic-backups-<restic-repo-name>.service
+```
+Backups are triggered for all services at once within 1 snapshot.
+
+### Backup restoration
+
+Similarly with backing-up, restoration consists of 2 parts: 
+1. Staging restic snapshot data of the service to the `restic.restore.stagingRoot/<service-name>` with `backup-restore` / `backup-restore-command` of the restic user.
+2. Triggering backup restoration from the staging directory to the service `sources` paths with system systemd service `backup-restore-<service-name>.service`. Before, it checks if staging already exists. To preserve data consistency, each service could declare its stop/start commands via `<service>.backup.exporter.preCommand/postCommand`.
+3. Original service `sources` are preserved in `restic.restore.rollbackRoot/<service-name>` and not deleted automatically. Consider clean rollbackRoot directory manually on space run-out.
+
+Usage:
+```sh
+AS_USER=homelab-backup task inspect -- backup-restore <service-name> <restic-repo-name> <snapshot-id>
+sudo systemctl start backup-restore-<service-name>.service
+```
+
+To check restoration log, read: `sudo journalctl -e -u backup-restore-<service-name>`.
+
 ## Status
 
 The previous, legacy version contains docker-compose declarations for the services. In the future, they will be replaced with nix modules.

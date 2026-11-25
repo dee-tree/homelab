@@ -83,8 +83,6 @@ in {
             Type = "oneshot";
             Group = "backup-readers";
             UMask = "0027";
-            # StateDirectory = "backup-export/${service}"; # resolved into /var/lib/backup-export for system service
-            # StateDirectoryMode = "0750";
             ExecStartPre = lib.optional (b.preCommand != null) b.preCommand;
             ExecStart = "${mkExport service b}/bin/export-${service}";
             ExecStopPost = lib.optional (b.postCommand != null) b.postCommand;
