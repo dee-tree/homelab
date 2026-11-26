@@ -1,25 +1,21 @@
 {
-  config,
   hostConfig,
   scfg,
   lib,
   pkgs,
   ...
 }: let
-dataDir = "${config.home.homeDirectory}/data/radicale";
-radicaleConfig = pkgs.writeText "radicale-config" (import ./config/config.nix {
-  inherit lib;
-  cfg = hostConfig;
-});
+  radicaleConfig = pkgs.writeText "radicale-config" (import ./config/config.nix {
+    inherit hostConfig lib;
+  });
 in {
-
   main = {
     # Run as root inside rootless container, mapping to worker on the host
     user = "0:0";
     volumes = [
       "${radicaleConfig}:/etc/radicale/config:ro"
       "${scfg.usersFile}:/etc/radicale/users:ro"
-      "${dataDir}:/var/lib/radicale"
+      "${scfg.dataDir}:/var/lib/radicale"
       "/var/log/radicale:/var/log/radicale"
     ];
     labels = {
@@ -46,5 +42,4 @@ in {
       };
     };
   };
-
 }

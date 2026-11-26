@@ -1,5 +1,6 @@
-{ lib, cfg }:
+{ lib, hostConfig }:
 let
+cfg = hostConfig;
 verbose = cfg.verbose || cfg.services.radicale.verbose;
 in
 ''

@@ -1,0 +1,32 @@
+{
+  lib,
+  ...
+}: let
+  inicfg = {
+    couchdb = {
+      single_node = true;
+      max_document_size = 50000000;
+    };
+    chttpd = {
+      require_valid_user = true;
+      enable_cors = true;
+      max_http_request_size = 4294967296;
+    };
+    chttpd_auth.require_valid_user = true;
+    httpd = {
+      "WWW-Authenticate" = ''Basic realm="couchdb"'';
+      enable_cors = true;
+    };
+    cors = {
+      credentials = true;
+      origins = "app://obsidian.md,capacitor://localhost,http://localhost";
+      methods = "GET,PUT,POST,HEAD,DELETE";
+      headers = "accept, authorization, content-type, origin, referer";
+      max_age = 3600;
+    };
+    log.file = "/var/log/obsidian-livesync/livesync.log";
+    # log.level = "debug";
+    # writer = stderr
+  };
+in
+  lib.generators.toINI { } inicfg

@@ -56,12 +56,13 @@
             ./hosts/${hostname}
             secrets.secretsModule.${hostname}
             ({
+              config,
               pkgs,
               lib,
               ...
             }: let
               configModule = lib.recursiveUpdate
-                (import ./config {inherit lib pkgs;}) # low priority host-level defaults
+                (import ./config {inherit config lib pkgs;}) # low priority host-level defaults
                 secrets.configModule; # higher priority config
               cfg = configModule.${hostname} or {};
             in {

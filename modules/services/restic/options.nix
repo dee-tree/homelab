@@ -1,4 +1,4 @@
-{ config, lib }:
+{ config, lib, ... }:
 let
   inherit (lib) mkOption types mkEnableOption;
 
@@ -48,7 +48,7 @@ in
     default = { };
     type = types.attrsOf repo;
   };
-  
+
   exportRoot = mkOption {
       type = types.path;
       default = "/var/lib/backup-export";

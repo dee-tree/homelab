@@ -1,6 +1,11 @@
 # Schema for homelab config.
 # The single option tree shared by the system and Home Manager layers.
-{config, lib, ...}: let
+{
+  config,
+  lib,
+  ...
+}: let
+  cfg = config.homelab;
   inherit (lib) mkOption mkEnableOption types;
 
   # Restrict to characters that are safe inside nginx config and shell args.
@@ -69,7 +74,13 @@ in {
     verbose = mkEnableOption "Should verbose logging be enabled for the whole host";
 
     services = lib.genAttrs services (
-      service: mkServiceOpts {options = import ../services/${service}/options.nix {inherit config lib;};}
+      service:
+        mkServiceOpts {
+          options = import ../services/${service}/options.nix {
+            inherit config cfg lib;
+            scfg = cfg.services.${service};
+          };
+        }
     );
   };
 }

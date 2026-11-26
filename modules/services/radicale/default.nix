@@ -2,16 +2,16 @@
   mkPodmanService = import ../../../lib/mk-podman-service.nix;
 
   home = {
-    config,
+    hostConfig,
     lib,
     pkgs,
     ...
   }: let
-    dataDir = "${config.home.homeDirectory}/data/radicale";
+    scfg = hostConfig.services.radicale;
   in {
     home.activation.radicaleData = lib.hm.dag.entryAfter ["writeBoundary"] ''
-      run ${pkgs.coreutils}/bin/mkdir -p ${lib.escapeShellArg dataDir}
-      run ${pkgs.coreutils}/bin/chmod 0700 ${lib.escapeShellArg dataDir}
+      run ${pkgs.coreutils}/bin/mkdir -p ${lib.escapeShellArg scfg.dataDir}
+      run ${pkgs.coreutils}/bin/chmod 0700 ${lib.escapeShellArg scfg.dataDir}
     '';
   };
 
