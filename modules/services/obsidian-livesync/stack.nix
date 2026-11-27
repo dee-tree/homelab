@@ -7,11 +7,8 @@
   ...
 }: let
   livesyncConfig = pkgs.writeText "livesync.ini" (import ./config/livesync.ini.nix {inherit hostConfig lib;});
-  couchDbUid = "5984";
 in {
   main = {
-    # CouchDB should be run as `5984` user
-    user = "${couchDbUid}:${couchDbUid}";
     volumes = [
       "${scfg.dataDir}:/opt/couchdb/data"
       "${livesyncConfig}:/opt/couchdb/etc/local.ini:ro"
@@ -22,7 +19,8 @@ in {
     ];
     labels = {
       "traefik.enable" = "true";
-      "traefik.http.routers.obsidian.rule" = "Host(`${scfg.subdomain}.${hostConfig.domain}`) && (Path(`/`) || Path(`/_session`) || PathRegexp(`^/obsidian(/.*)\$`))";
+      # "traefik.http.routers.obsidian.rule" = "Host(`${scfg.subdomain}.${hostConfig.domain}`) && (Path(`/`) || Path(`/_session`) || PathRegexp(`^/obsidian(/.*)\$`))";
+      "traefik.http.routers.obsidian.rule" = "Host(`${scfg.subdomain}.${hostConfig.domain}`)";
       "traefik.docker.network" = "revproxy";
       "traefik.http.routers.obsidian.service" = "obsidian";
       "traefik.http.services.obsidian.loadbalancer.server.port" = "5984";

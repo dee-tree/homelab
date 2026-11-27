@@ -10,4 +10,10 @@
   ];
   backup.exporter.preCommand = "${pkgs.systemd}/bin/systemctl --user --machine=worker@.host stop podman-obsidian-livesync.service";
   backup.exporter.postCommand = "${pkgs.systemd}/bin/systemctl --user --machine=worker@.host start podman-obsidian-livesync.service";
+
+  dataOwner = rec {
+    mode = "container";
+    uid = 5984;
+    gid = uid;
+  };
 }

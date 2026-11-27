@@ -22,41 +22,40 @@
       then name
       else "${name}-${suffix}";
     defs = containers args;
-  in
-    {
-      imports = lib.optional (homeExtra != null) homeExtra;
-      services.podman.enable = true;
+  in {
+    imports = lib.optional (homeExtra != null) homeExtra;
+    services.podman.enable = true;
 
-      services.podman.networks = lib.optionalAttrs network {
-        ${name} = {driver = "bridge";};
-      };
-
-      services.podman.containers = lib.mapAttrs' (suffix: container:
-        lib.nameValuePair (cname suffix) (
-          {
-            autoStart = true;
-            extraConfig = {
-              Service = {
-                Restart = "on-failure";
-                RestartSec = "5s";
-              };
-              Container = {
-                ContainerName = name;
-                HealthInterval = "30s";
-                HealthTimeout = "5s";
-                HealthRetries = 3;
-                HealthOnFailure = "kill";
-              };
-            };
-
-          }
-          // lib.optionalAttrs (suffix == "main") {image = "${scfg.image}:${scfg.label}";}
-          // lib.optionalAttrs network {network = [name];}
-          // lib.optionalAttrs (suffix == "main" && scfg.ip4 != null) {ip4 = scfg.ip4;}
-          // container
-        ))
-      defs;
+    services.podman.networks = lib.optionalAttrs network {
+      ${name} = {driver = "bridge";};
     };
-    # // lib.optionalAttrs (homeExtra != null) (homeExtra args);
+
+    services.podman.containers = lib.mapAttrs' (suffix: container:
+      lib.nameValuePair (cname suffix) (
+        {
+          autoStart = true;
+          extraConfig = {
+            Service = {
+              Restart = "on-failure";
+              RestartSec = "5s";
+            };
+            Container = {
+              ContainerName = name;
+              HealthInterval = "30s";
+              HealthTimeout = "5s";
+              HealthRetries = 3;
+              HealthOnFailure = "kill";
+            };
+          };
+          user = lib.mkIf (scfg.dataOwner.mode == "container") "${toString scfg.dataOwner.uid}:${toString scfg.dataOwner.gid}";
+          image = lib.mkIf (suffix == "main") "${scfg.image}:${scfg.label}";
+          ip4 = lib.mkIf (suffix == "main" && scfg.ip4 != null) scfg.ip4;
+        }
+        // lib.optionalAttrs network {network = [name];}
+        // container
+      ))
+    defs;
+  };
+  # // lib.optionalAttrs (homeExtra != null) (homeExtra args);
 in
   mkService {inherit name home system;}

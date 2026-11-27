@@ -41,6 +41,34 @@ in {
       description = "Extra podman volume specs.";
     };
 
+    dataOwner = {
+      mode = lib.mkOption {
+        type = lib.types.enum ["runtime" "container" "host"];
+        default = "runtime";
+        description = ''
+          runtime   - owned by the runtime account (native services, no root podman)
+          container - owned by container IDs, translated by `podman unshare`
+          host      - explicit host user and group names (system services)
+        '';
+      };
+      uid = lib.mkOption {
+        type = lib.types.nullOr lib.types.ints.unsigned;
+        default = null;
+      };
+      gid = lib.mkOption {
+        type = lib.types.nullOr lib.types.ints.unsigned;
+        default = null;
+      };
+      user = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+      };
+      group = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+      };
+    };
+
     backup.exporter = (import ./backup-exporter.nix {inherit lib;}).exporter service;
 
     verbose = mkEnableOption "Should verbose logging be enabled for the ${service}";
