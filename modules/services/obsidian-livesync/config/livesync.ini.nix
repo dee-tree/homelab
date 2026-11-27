@@ -1,7 +1,9 @@
 {
+  hostConfig,
   lib,
   ...
 }: let
+  verbose = hostConfig.verbose || hostConfig.services.obsidian-livesync.verbose;
   inicfg = {
     couchdb = {
       single_node = true;
@@ -25,7 +27,7 @@
       max_age = 3600;
     };
     log.file = "/var/log/obsidian-livesync/livesync.log";
-    # log.level = "debug";
+    log.level = if verbose then "debug" else "warning";
     # writer = stderr
   };
 in

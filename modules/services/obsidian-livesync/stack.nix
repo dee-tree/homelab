@@ -6,9 +6,12 @@
   pkgs,
   ...
 }: let
-  livesyncConfig = pkgs.writeText "livesync.ini" (import ./config/livesync.ini.nix {inherit lib;});
+  livesyncConfig = pkgs.writeText "livesync.ini" (import ./config/livesync.ini.nix {inherit hostConfig lib;});
+  couchDbUid = "5984";
 in {
   main = {
+    # CouchDB should be run as `5984` user
+    user = "${couchDbUid}:${couchDbUid}";
     volumes = [
       "${scfg.dataDir}:/opt/couchdb/data"
       "${livesyncConfig}:/opt/couchdb/etc/local.ini:ro"
@@ -19,7 +22,7 @@ in {
     ];
     labels = {
       "traefik.enable" = "true";
-      "traefik.http.routers.obsidian.rule" = "Host(`${scfg.subdomain}.${hostConfig.domain}`)";
+      "traefik.http.routers.obsidian.rule" = "Host(`${scfg.subdomain}.${hostConfig.domain}`) && (Path(`/`) || Path(`/_session`) || PathRegexp(`^/obsidian(/.*)\$`))";
       "traefik.docker.network" = "revproxy";
       "traefik.http.routers.obsidian.service" = "obsidian";
       "traefik.http.services.obsidian.loadbalancer.server.port" = "5984";
@@ -27,12 +30,12 @@ in {
       "traefik.http.routers.obsidian.tls" = "true";
       "traefik.http.routers.obsidian.tls.certresolver" = "production";
     };
-    # environmentFile = [ config.sops.templates."obsidian-livesync.env".path ];
+    environmentFile = [ config.sops.templates."obsidian-livesync.env".path ];
     extraConfig = {
       Container.HealthCmd = ''curl -fsS -u "$COUCHDB_USER:$COUCHDB_PASSWORD" http://127.0.0.1:5984/_up'';
       Unit = {
-        # Requires = ["sops-nix.service"];
-        # After = ["sops-nix.service"];
+        Requires = ["sops-nix.service"];
+        After = ["sops-nix.service"];
       };
     };
   };
